@@ -1,0 +1,2752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Sealed Hiring Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<style>
+/* Layout concept: one quiet column of type on a plain page. Hairlines instead of boxes, and the redaction bar as the only ornament. */
+:root {
+  --paper: #ffffff;
+  --ink: #0b0b0c;
+  --muted: #6c6c72;
+  --rule: #e6e6e9;
+  --tint: #f5f5f6;
+  --accent: var(--ink);
+  --bar: #0b0b0c;
+  --bar-ink: #9a9aa2;
+  --good: #0f6b4c;
+  --warn: #8a5300;
+  --warn-soft: #fbf3e2;
+  --bad: #a3263a;
+  --bad-soft: #fbecee;
+  --sans: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0c0c0d; --ink: #f3f3f4; --muted: #9c9ca3; --rule: #27272b; --tint: #18181b; --bar: #000000; --bar-ink: #7d7d85;
+    --good: #5cc9a0; --warn: #e8b868; --warn-soft: #2c2212; --bad: #f08a99; --bad-soft: #351820;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0c0c0d; --ink: #f3f3f4; --muted: #9c9ca3; --rule: #27272b; --tint: #18181b; --bar: #000000; --bar-ink: #7d7d85;
+  --good: #5cc9a0; --warn: #e8b868; --warn-soft: #2c2212; --bad: #f08a99; --bad-soft: #351820;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-weight: 500; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.05; letter-spacing: -0.035em; }
+h2 { font-size: 1.3rem; line-height: 1.25; letter-spacing: -0.015em; }
+h3 { font-size: 1rem; line-height: 1.4; }
+h2.prompt { font-size: clamp(1.4rem, 3.6vw, 1.8rem); line-height: 1.2; letter-spacing: -0.025em; }
+p { margin: 0; }
+a { color: inherit; }
+.muted { color: var(--muted); }
+.small { font-size: 0.875rem; }
+.lede { font-size: 1.1rem; color: var(--muted); }
+.pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.code { font-family: var(--mono); font-weight: 500; letter-spacing: 0.02em; white-space: nowrap; }
+h1.code { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: 0; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Layout */
+.top { border-bottom: 1px solid var(--rule); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+.top-in { max-width: 1040px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px; min-height: 64px; padding-block: 10px; }
+.top.dark { background: #000000; border-color: #000000; color: #ffffff; }
+.brand { font: 600 1.05rem var(--sans); letter-spacing: -0.02em; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; }
+.logo { height: 16px; width: auto; max-width: 180px; display: block; }
+.nav { display: flex; flex-wrap: wrap; gap: 2px 20px; flex: 1; min-width: 0; }
+.nav button, .signout { background: none; border: 0; color: inherit; opacity: 0.55; font: 400 0.94rem var(--sans); padding: 4px 0; cursor: pointer; }
+.nav button:hover, .signout:hover, .nav button.on { opacity: 1; }
+.page { max-width: 1040px; margin: 0 auto; padding-block: clamp(36px, 7vw, 72px) 96px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: grid; gap: 32px; grid-template-columns: minmax(0, 1fr); }
+.page.narrow { max-width: 680px; }
+.stack { display: grid; gap: 14px; min-width: 0; align-content: start; grid-template-columns: minmax(0, 1fr); }
+.stack.lg { gap: 32px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.row.end { justify-content: flex-end; }
+.between { justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 20px; }
+.panel { background: var(--tint); border-radius: 12px; padding: 20px; }
+.eyebrow { font-size: 0.875rem; color: var(--muted); }
+
+/* Controls */
+.btn { font: 500 0.95rem var(--sans); padding: 10px 20px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; min-height: 44px; }
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover:not(:disabled) { opacity: 0.85; }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.quiet { background: none; border: 0; padding: 4px 0; color: var(--muted); font: 400 0.94rem var(--sans); cursor: pointer; text-decoration: none; }
+.quiet:hover { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.field { display: grid; gap: 6px; font-weight: 500; font-size: 0.94rem; min-width: 0; }
+.hint { font-weight: 400; color: var(--muted); font-size: 0.875rem; }
+input[type=text], input[type=email], input[type=tel], input[type=password], input[type=number], input[type=datetime-local], textarea, select {
+  width: 100%; font: 400 1rem var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 10px; padding: 11px 13px; min-width: 0;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--ink); outline: none; }
+input[type=file] { font: 400 0.9rem var(--sans); max-width: 100%; }
+input[type=color] { width: 52px; height: 36px; padding: 0; background: none; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+textarea { min-height: 160px; resize: vertical; line-height: 1.6; }
+.check, .choice { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; font-weight: 400; }
+.check input, .choice input { margin-top: 5px; width: 16px; height: 16px; flex: none; accent-color: var(--ink); }
+.must { border: 0; padding: 0 0 14px; margin: 0; border-bottom: 1px solid var(--rule); display: grid; gap: 8px; min-width: 0; }
+.must legend { font-weight: 500; font-size: 0.94rem; padding: 0; margin-bottom: 8px; }
+.must .row { gap: 22px; }
+.hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+.error { background: var(--bad-soft); color: var(--bad); padding: 11px 14px; border-radius: 10px; }
+.notice { background: var(--tint); padding: 14px 16px; border-radius: 12px; }
+.warn { background: var(--warn-soft); color: var(--warn); padding: 11px 14px; border-radius: 10px; font-size: 0.94rem; }
+.over { color: var(--bad); font-weight: 500; }
+
+/* Status */
+.pill { display: inline-block; font-size: 0.8rem; padding: 1px 10px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+.pill.advanced, .pill.sent { color: var(--good); border-color: currentColor; }
+.pill.discuss, .pill.queued { color: var(--warn); border-color: currentColor; }
+.tally { display: flex; flex-wrap: wrap; gap: 12px 48px; margin: 0; }
+.tally dt { color: var(--muted); font-size: 0.875rem; }
+.tally dd { margin: 0; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; letter-spacing: -0.03em; }
+
+/* Redaction bar */
+.bar { display: inline-block; background: var(--bar); color: var(--bar-ink); font: 500 0.66rem/1.55 var(--mono); padding: 1px 8px; vertical-align: 1px; border-radius: 2px; white-space: nowrap; }
+
+/* Stepper */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; list-style: none; margin: 0; padding: 0; }
+.steps li { border-top: 2px solid var(--rule); padding-top: 8px; font-size: 0.875rem; color: var(--muted); min-width: 0; }
+.steps li.on { border-color: var(--accent); color: var(--ink); }
+.steps li.done { border-color: var(--accent); }
+
+/* Scoring */
+.scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.scale button { border: 1px solid var(--rule); background: transparent; color: var(--muted); border-radius: 10px; padding: 12px 2px; cursor: pointer; font: 400 0.72rem/1.25 var(--sans); min-width: 0; }
+.scale b { display: block; font: 500 1.3rem var(--sans); color: var(--ink); }
+.scale button:hover { border-color: var(--ink); }
+.scale button[aria-pressed=true] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.scale button[aria-pressed=true] b { color: var(--paper); }
+.meter { height: 2px; background: var(--rule); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+.answer { font-size: 1.15rem; line-height: 1.65; }
+
+/* Tables and lists */
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th { text-align: left; font-size: 0.875rem; color: var(--muted); font-weight: 400; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: bottom; white-space: nowrap; }
+td { padding: 14px 12px 14px 0; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--tint); }
+.scorecell { font-weight: 500; font-size: 1.05rem; }
+.bigscore { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: -0.03em; }
+.role-row { display: grid; gap: 6px; padding-block: 22px; border-bottom: 1px solid var(--rule); }
+.role-row:first-child { padding-top: 0; }
+.aside { display: flex; flex-wrap: wrap; gap: 4px 20px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); color: var(--ink); font: 400 0.95rem/1.5 var(--sans); padding: 14px 0; cursor: pointer; }
+.aside:hover { background: var(--tint); }
+.qcard { border-bottom: 1px solid var(--rule); padding-bottom: 22px; display: grid; gap: 12px; }
+.qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; }
+.qa { border-top: 1px solid var(--rule); padding-top: 24px; }
+.score-list { display: grid; gap: 2px; font-size: 0.9rem; }
+.kv { display: grid; grid-template-columns: minmax(80px, auto) minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.logo-preview { min-height: 64px; display: flex; align-items: center; padding: 16px 20px; border-radius: 12px; background: var(--tint); font-weight: 600; letter-spacing: -0.02em; }
+.logo-preview.dark { background: #000000; color: #ffffff; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 20px; border-radius: 999px; font-size: 0.94rem; z-index: 30; max-width: calc(100vw - 32px); }
+
+/* Emails page */
+.mail-list { border-top: 1px solid var(--rule); }
+.mail-row { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--rule); }
+.mail-row.on { box-shadow: inset 2px 0 0 var(--accent); padding-left: 14px; }
+.mail-pick { flex: 1; min-width: 0; display: grid; gap: 1px; text-align: left; background: none; border: 0; color: inherit; padding: 13px 0; cursor: pointer; font: inherit; }
+.mail-name { font-weight: 500; }
+.switch { position: relative; flex: none; width: 40px; height: 24px; cursor: pointer; }
+.switch input { position: absolute; inset: 0; margin: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.switch i { position: absolute; inset: 0; border-radius: 999px; background: var(--rule); pointer-events: none; }
+.switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; }
+.switch input:checked + i { background: var(--ink); }
+.switch input:checked + i::after { left: 18px; background: var(--paper); }
+.switch input:focus-visible + i { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 40px; align-items: start; }
+.stage { display: grid; gap: 14px; justify-items: center; min-width: 0; background: var(--tint); border-radius: 16px; padding: 20px 12px; }
+.seg { gap: 4px; }
+.seg button { background: none; border: 0; color: var(--muted); font: 400 0.875rem var(--sans); padding: 4px 12px; border-radius: 999px; cursor: pointer; }
+.seg button.on { background: var(--paper); color: var(--ink); }
+/* The email itself keeps its own light colours in every theme, as it does in a mail app. */
+.device { --mail-ink: #111113; --mail-muted: #6c6c72; --mail-rule: #e6e6e9; width: 100%; background: #ffffff; color: var(--mail-ink); overflow: hidden; }
+.device.phone { max-width: 375px; border-radius: 28px; border: 6px solid #0b0b0c; }
+.device.desktop { max-width: 600px; border-radius: 10px; border: 1px solid var(--rule); }
+.device-meta { padding: 16px 18px 12px; border-bottom: 1px solid var(--mail-rule); }
+.device-from { font-weight: 600; font-size: 0.875rem; }
+.device-subject { font-size: 0.875rem; color: var(--mail-muted); }
+.mail { font: 400 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.mail-head { padding: 22px 24px; font-weight: 600; letter-spacing: -0.02em; color: var(--mail-ink); background: #ffffff; }
+.mail-head.dark { background: #000000; color: #ffffff; }
+.mail-logo { height: 16px; width: auto; max-width: 180px; display: block; }
+.mail-head { padding-bottom: 14px; }
+.mail-hero { padding: 6px 24px 30px; background: #ffffff; color: var(--mail-ink); }
+.mail-hero.dark { background: #000000; color: #ffffff; }
+.mail-hero i { display: block; width: 44px; height: 6px; margin-bottom: 18px; }
+.mail-hero h2 { font: inherit; font-size: 32px; line-height: 1.12; font-weight: 600; letter-spacing: -0.02em; }
+.mail-steps { padding: 22px 24px 0; }
+.mail-bars { display: flex; gap: 3px; }
+.mail-bars i { flex: 1; height: 4px; background: var(--mail-rule); }
+.mail-steps p { margin-top: 10px; font-size: 13px; color: var(--mail-muted); }
+.mail-body { padding: 28px 24px; display: grid; gap: 18px; }
+.mail-p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--mail-ink); }
+.mail-cta { background: #111113; color: #ffffff; text-align: center; font-weight: 500; font-size: 16px; padding: 14px 20px; border-radius: 999px; }
+.mail-foot { padding: 18px 24px 24px; border-top: 1px solid var(--mail-rule); color: var(--mail-muted); font-size: 13px; line-height: 1.5; }
+
+.block { display: block; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; padding: 2px 11px; border: 1px solid var(--rule); border-radius: 999px; font-size: 0.82rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.chip:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+select.inline { width: auto; padding: 6px 10px; font-size: 0.92rem; }
+.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px 28px; margin: 0; }
+.levels dt { font-weight: 500; }
+.levels dd { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+/* Hero */
+.hero { background: var(--tint); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+.hero.dark { background: #000000; color: #ffffff; --muted: #a3a3a9; }
+.hero-in { max-width: 1040px; margin: 0 auto; padding-block: clamp(36px, 8vw, 80px); display: grid; gap: 14px; }
+.hero-in.narrow { max-width: 640px; }
+.hero-in h1 { font-size: clamp(2.4rem, 8vw, 4.2rem); line-height: 1; }
+.hero .lede { color: var(--muted); max-width: 58ch; }
+.hero .eyebrow { color: var(--muted); }
+.hero-mark { display: block; width: 56px; height: 7px; background: var(--accent); }
+
+/* Pipeline */
+.funnel { display: flex; gap: 10px; overflow-x: auto; align-items: flex-start; padding-bottom: 4px; }
+.funnel-step { flex: 1 0 84px; min-width: 84px; display: grid; gap: 1px; align-content: start; }
+.funnel-bar { height: 76px; display: flex; align-items: flex-end; margin-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.funnel-bar i { display: block; width: 100%; background: var(--accent); }
+.funnel-num { font-size: 1.5rem; line-height: 1.1; letter-spacing: -0.02em; }
+.kanban { display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; padding-bottom: 12px; scroll-snap-type: x proximity; }
+.column { flex: 0 0 min(268px, 80vw); background: var(--tint); border-radius: 12px; padding: 12px; display: grid; gap: 8px; scroll-snap-align: start; min-height: 150px; align-content: start; }
+.column.over { outline: 2px solid var(--accent); outline-offset: -2px; }
+.column-head { display: flex; gap: 8px; align-items: baseline; padding: 2px 2px 6px; }
+.column-head h3 { flex: 1; min-width: 0; font-weight: 500; }
+.empty { padding: 2px; }
+.card { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; }
+.card[draggable=true] { cursor: grab; }
+.card.lifted { opacity: 0.45; }
+.card.stalled { border-color: var(--warn); }
+.card-open { display: grid; gap: 1px; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.card-open strong { font-weight: 500; }
+.card-meta { gap: 6px; font-size: 0.875rem; }
+.card-move { width: 100%; padding: 5px 8px; font-size: 0.85rem; color: var(--muted); }
+.stage-log { border-top: 1px solid var(--rule); padding-top: 14px; }
+details summary { cursor: pointer; list-style-position: inside; }
+
+/* Checklist, timeline, account */
+.setup { list-style: none; margin: 0; padding: 0; display: grid; }
+.setup li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; padding-block: 8px; border-top: 1px solid var(--rule); }
+.setup li.done > .grow { color: var(--muted); }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { position: relative; padding: 0 0 22px 26px; display: grid; color: var(--muted); }
+.timeline li::before { content: ""; position: absolute; left: 0; top: 7px; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--rule); background: var(--paper); z-index: 1; }
+.timeline li::after { content: ""; position: absolute; left: 5px; top: 12px; bottom: -7px; width: 1px; background: var(--rule); }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li:last-child::after { display: none; }
+.timeline li.done { color: var(--ink); }
+.timeline li.done::before { background: var(--accent); border-color: var(--accent); }
+.wrap { white-space: normal; overflow-wrap: anywhere; }
+.qr { width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 10px; }
+.recovery { word-spacing: 0.4em; line-height: 1.9; }
+.keys { display: none; }
+@media (hover: hover) and (min-width: 700px) { .keys { display: inline; } }
+
+/* Motion: quick and quiet, and off for anyone who prefers less */
+@media (prefers-reduced-motion: no-preference) {
+  main.page { animation: settle 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .btn, .scale button, .quiet, .nav button, input, textarea, select, .switch i, .switch i::after, tr.click td, .aside { transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, left 0.15s ease; }
+  .btn:active:not(:disabled), .scale button:active { transform: scale(0.98); }
+  .toast { animation: settle 0.2s ease both; }
+}
+@keyframes settle { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+
+/* Demo only */
+.demo-bar { background: var(--tint); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+.demo-in { max-width: 1040px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding-block: 9px; font-size: 0.875rem; color: var(--muted); }
+.demo-in strong { font-weight: 400; }
+.demo-in button { background: none; color: var(--muted); border: 0; border-radius: 999px; padding: 3px 12px; font: 400 0.875rem var(--sans); cursor: pointer; }
+.demo-in button.on { background: var(--ink); color: var(--paper); }
+.demo-in button.reset { text-decoration: underline; padding-inline: 2px; }
+@media (max-width: 560px) {
+  .q-col { display: none; }
+  .top-in { justify-content: space-between; }
+  .nav { order: 3; flex: 0 0 100%; gap: 2px 16px; }
+}
+@media (prefers-reduced-motion: no-preference) { .meter i { transition: width 0.25s ease; } }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// Removes details that identify an applicant from their answers.
+// Runs before anything is stored, so the original text never reaches reviewers.
+
+const TLDS = 'com\\.au|net\\.au|org\\.au|co\\.nz|com|org|net|io|co|ai|dev|app|me|au|nz';
+const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/gu;
+const URL_RE = new RegExp(`(?:\\bhttps?:\\/\\/|\\bwww\\.)\\S+|\\b[a-z0-9-]+\\.(?:${TLDS})(?:\\/\\S*)?(?![\\w.-]*\\w)`, 'gi');
+const PHONE = /(?<![\w.])\+?\(?\d[\d\s().-]{6,18}\d(?![\w])/g;
+const HANDLE = /(?<![\w.])@[A-Za-z0-9_]{2,}/g;
+
+const HINTS = [
+  [/\bmy name is\b/i, 'You mention your name directly.'],
+  [/\b(?:i am|i'm) \d{2}\b|\b\d{2} years old\b|\bborn in\b/i, 'You mention your age or birth year.'],
+  [/\bmy (?:wife|husband|son|daughter|father|mother|dad|mum|mom)\b/i, 'You mention a family member, which can reveal personal details.'],
+  [/\bgraduated (?:from|in)\b|\balma mater\b/i, 'You mention where or when you studied. Consider whether reviewers need that detail.'],
+];
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+function looksLikePhone(match) {
+  const digits = match.replace(/\D/g, '');
+  if (digits.length < 8 || digits.length > 15) return false;
+  // Year ranges like "2019-2021" have enough digits but are not phone numbers.
+  const groups = match.match(/\d+/g);
+  if (groups.every((g) => /^(?:19|20)\d{2}$/.test(g))) return false;
+  if (/^[+(0]/.test(match)) return true;
+  return /^\d{3}[\s.-]\d{3}[\s.-]\d{4}$/.test(match);
+}
+
+function nameForms(contact) {
+  const forms = new Set();
+  const first = String(contact?.first_name ?? '').trim();
+  const last = String(contact?.last_name ?? '').trim();
+  if (first && last) forms.add(`${first} ${last}`);
+  for (const whole of [first, last]) {
+    if (whole) forms.add(whole);
+    for (const part of whole.split(/[\s-]+/)) {
+      if (part.length >= 2) forms.add(part);
+    }
+  }
+  // Matching is case sensitive on purpose: "Will" the name is removed, "will" the word is not.
+  const out = new Set();
+  for (const f of forms) {
+    const cased = f.split(' ').map((w) => w.split('-').map(titleCase).join('-')).join(' ');
+    out.add(cased);
+    out.add(f);
+    out.add(f.toUpperCase());
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+}
+
+function redact(input, contact) {
+  let text = String(input ?? '');
+  const found = [];
+  const swap = (re, type, keep = () => true) => {
+    text = text.replace(re, (m) => {
+      const trailing = m.match(/[.,;:!?)\]'"]+$/)?.[0] ?? '';
+      const core = trailing ? m.slice(0, -trailing.length) : m;
+      if (!core || !keep(core)) return m;
+      found.push({ type, value: core });
+      return `[${type} removed]${trailing}`;
+    });
+  };
+
+  swap(EMAIL, 'email');
+  swap(URL_RE, 'link');
+  swap(PHONE, 'phone', looksLikePhone);
+  swap(HANDLE, 'handle');
+  const names = nameForms(contact);
+  if (names.length) {
+    swap(new RegExp(`(?<![\\p{L}\\p{N}])(?:${names.map(escapeRe).join('|')})(?![\\p{L}\\p{N}])`, 'gu'), 'name');
+  }
+
+  const hints = HINTS.filter(([re]) => re.test(text)).map(([, msg]) => msg);
+  return { text, found, hints };
+}
+
+// The rule half of the first scan. No AI, and it never sees contact details.
+
+const words = (s) => String(s ?? '').toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+
+function overlap(a, b) {
+  if (!a.size || !b.size) return 0;
+  let shared = 0;
+  for (const x of a) if (b.has(x)) shared += 1;
+  return shared / (a.size + b.size - shared);
+}
+function threeWordRuns(text) {
+  const w = words(text);
+  const runs = new Set();
+  for (let i = 0; i + 2 < w.length; i += 1) runs.add(`${w[i]} ${w[i + 1]} ${w[i + 2]}`);
+  return runs;
+}
+
+// Returns reasons. "hard" means the role's stated requirement was not met, so spot-checks skip it.
+function ruleCheck({ questions, answers, mustHaveNo = [], others = [], rules = {} }) {
+  const hard = mustHaveNo.map((m) => `Answered no to a requirement: ${m}`);
+  const soft = [];
+  const texts = questions.map((q) => answers[q.id] ?? '');
+
+  questions.forEach((q, i) => {
+    const w = words(texts[i]);
+    const label = (q.position ?? i) + 1;
+    if (rules.repeat_question !== false && overlap(new Set(w), new Set(words(q.prompt))) > 0.75) soft.push(`Answer ${label} repeats the question.`);
+    if (rules.low_variety !== false && w.length >= 15 && new Set(w).size / w.length < 0.35) soft.push(`Answer ${label} is mostly repeated words.`);
+  });
+  for (let i = 0; rules.same_answer !== false && i < texts.length; i += 1) {
+    for (let j = i + 1; j < texts.length; j += 1) {
+      if (words(texts[i]).length >= 5 && overlap(threeWordRuns(texts[i]), threeWordRuns(texts[j])) > 0.8) {
+        soft.push(`Answers ${i + 1} and ${j + 1} are the same text.`);
+      }
+    }
+  }
+  const mine = threeWordRuns(texts.join(' '));
+  if (rules.near_copy !== false && mine.size >= 15) {
+    const copy = others.find((o) => overlap(mine, threeWordRuns(o.text)) > 0.7);
+    if (copy) soft.push(`Nearly identical to application ${copy.code}.`);
+  }
+  return { hard, soft };
+}
+
+// Fictional sample data, used by the local seed script and the public demo.
+const demoStages = [
+  { name: 'Work task', type: 'task', prompt: 'Write a one page note on a founder program you would run. Keep it under an hour.', due_days: 7, stall_days: 5 },
+  { name: 'First interview', type: 'interview', prompt: 'A 30 minute conversation with the hiring lead.', booking_url: 'https://cal.example.com/first', stall_days: 5 },
+  { name: 'Team interview', type: 'interview', prompt: 'Meet the people you would work with.', stall_days: 5 },
+  { name: 'References', type: 'references', prompt: 'Please share two referees, with their name, relationship and email.', stall_days: 5 },
+  { name: 'Offer', type: 'offer', stall_days: 5 },
+  { name: 'Hired', type: 'hired' },
+];
+const demoData = {
+  org: 'Example Ventures',
+  team: [
+    { key: 'alex', name: 'Alex Morgan', email: 'alex@example.com', role: 'admin', master: true, areas: [] },
+    { key: 'jess', name: 'Jess Park', email: 'jess@example.com', role: 'admin', areas: ['Investment', 'Platform'] },
+    { key: 'sam', name: 'Sam Rivera', email: 'sam@example.com', role: 'reviewer', areas: ['Investment', 'Platform'] },
+    { key: 'priya', name: 'Priya Nair', email: 'priya@example.com', role: 'reviewer', areas: ['Investment', 'Platform'] },
+    { key: 'mia', name: 'Mia Chen', email: 'mia@example.com', role: 'reviewer', areas: ['Investment'] },
+  ],
+  openRole: {
+    title: 'Investment Analyst',
+    summary: 'Help founders by doing the research that shapes early-stage investment decisions.',
+    description: 'You will meet founders, research new markets, and write the memos our partners use to decide what to back. No finance background is needed. We care about how you think.',
+    area: 'Investment',
+    stages: demoStages,
+    leads: ['jess'],
+    reviews_per: 2,
+    reviewers: ['sam', 'priya', 'mia'],
+    must_haves: ['Do you have the right to work in Australia?'],
+    questions: [
+      { prompt: 'Pick a startup you think is undervalued. Why would you back it?', guidance: 'A clear view, specific evidence, and honest risks.', word_limit: 200, min_words: 20, weight: 2 },
+      { prompt: 'Tell us about something you built or organised from scratch.', guidance: 'What you personally did, what changed because of it, and what you learned.', word_limit: 200, min_words: 20, weight: 1 },
+    ],
+    sample: {
+      contact: { first_name: 'Jordan', last_name: 'Lee', email: 'jordan.lee@example.com', phone: '0400 000 000', linkedin: 'linkedin.com/in/jordanlee' },
+      answers: [
+        'Hi, my name is Jordan Lee. I would back a company that automates compliance for small lenders. Regulation keeps growing, and most of these lenders still run reviews by hand. The main risk is long sales cycles. See my full memo at jordanlee.com/memo.',
+        'I started a weekend repair cafe in my suburb. I recruited eleven volunteers, found a free venue, and we fixed about 300 items in the first year. I learned to ask for help early. Contact me on jordan.lee@example.com if you want the numbers.',
+      ],
+    },
+  },
+  closedRole: {
+    title: 'Platform Associate',
+    summary: 'Run the programs and events that connect founders in our portfolio.',
+    description: 'You will run founder programs and events, and keep our community connected.',
+    area: 'Platform',
+    stages: demoStages,
+    leads: ['jess'],
+    reviews_per: 0,
+    reviewers: ['sam', 'priya'],
+    questions: [
+      { prompt: 'Describe an event or program you ran. What would you change next time?', guidance: 'Ownership, specifics, and real reflection.', word_limit: 200, weight: 2 },
+      { prompt: 'How would you find out what 50 founders need most?', guidance: 'A practical method that would work with busy people.', word_limit: 200, weight: 1 },
+    ],
+    // scores: [Priya Q1, Priya Q2, Sam Q1, Sam Q2]. A null means Sam has not scored it yet.
+    applicants: [
+      { contact: { first_name: 'Casey', last_name: 'Tran', email: 'casey@example.com', phone: '0400 000 001' }, scores: [5, 4, 5, 4], moveTo: 'First interview', opened: true,
+        answers: ['I ran a 200-person meetup series for three years, from budget to speakers. Attendance was strong, but newcomers felt lost. Next time I would pair every first-timer with a host before the night starts.', 'I would read their last three investor updates, then call ten founders from different stages. That gives me specific themes to test in a two-question survey with the rest. Busy people answer short questions.'] },
+      { contact: { first_name: 'Robin', last_name: 'Walsh', email: 'robin@example.com', phone: '0400 000 002' }, scores: [4, 5, 4, 4], moveTo: 'Work task', work: 'I would run a monthly problem swap, with six founders in a room and one shared problem each. The first session tests whether anyone comes back.',
+        answers: ['I organised a regional hackathon with 80 people and three sponsors. We lost momentum after the event because nobody owned the follow-up. I would now assign an owner to every team before demo day.', 'Sit in on their weekly routines where I can, then rank the problems by how often they come up and what they cost. I would share the ranking back and ask founders what I got wrong.'] },
+      { contact: { first_name: 'Taylor', last_name: 'Okafor', email: 'taylor@example.com', phone: '0400 000 003' }, scores: [5, 2, 3, 3],
+        answers: ['I ran a mentoring program across four cities with 60 mentors. Matching by industry worked badly. Next time I would match on the problem each person is facing, and check in after two weeks instead of at the end.', 'Send a survey to all of them and summarise the results in a report for the team.'] },
+      { contact: { first_name: 'Jamie', last_name: 'Fraser', email: 'jamie@example.com', phone: '0400 000 004' }, scores: [3, 3, 3, 4],
+        answers: ['I helped run the annual conference at my last workplace, mostly on logistics and registration. It went smoothly. I would spend more time on the program and less on the venue next time.', 'I would hold a founder roundtable each month and keep a shared list of requests, then follow up on the most common ones with a short email to everybody.'] },
+      { contact: { first_name: 'Morgan', last_name: 'Silva', email: 'morgan@example.com', phone: '0400 000 005' }, scores: [2, 3, 2, 2],
+        answers: ['I enjoy events and have attended many. I once helped a friend organise a fundraiser. I would make it bigger next time and get more sponsors.', 'I would ask them in a group chat and see what people say. Founders are usually happy to share what they need.'] },
+      { contact: { first_name: 'Drew', last_name: 'Kim', email: 'drew@example.com', phone: '0400 000 006' }, scores: [4, 4, null, null],
+        answers: ['I built a monthly founder dinner from six people to forty. I picked each table on purpose, which led to two partnerships. I waited too long to find a co-host, and I would bring one in from the start.', 'I would start with support tickets and investor notes to see what repeats, then do fifteen-minute calls with founders who have not asked for anything. The quiet ones often need the most help.'] },
+      // These five show the first scan. "ai" is the sample verdict for each answer, and null means it cleared the bar.
+      { contact: { first_name: 'Harper', last_name: 'Ng', email: 'harper@example.com', phone: '0400 000 007' }, scores: [4, 4, 4, 4], sampled: true, ai: ['Gives no detail about what was run.', null],
+        answers: ['Ran our street festival for five years. Would book the bands earlier.', 'Knock on doors. Founders talk when you turn up with coffee and listen properly to what is stuck.'] },
+      { contact: { first_name: 'Avery', last_name: 'Cole', email: 'avery@example.com', phone: '0400 000 008' }, scores: [null, null, null, null], ai: ['Does not describe an event or program.', 'Does not give a method.'],
+        answers: ['I am a hard worker and a fast learner who is passionate about startups and people.', 'I am great with people and would make sure every founder feels heard and supported.'] },
+      { contact: { first_name: 'Reese', last_name: 'Park', email: 'reese@example.com', phone: '0400 000 009' }, scores: [null, null, null, null],
+        answers: ['Describe an event or program you ran. What would you change next time?', 'How would you find out what 50 founders need most?'] },
+      { contact: { first_name: 'Sage', last_name: 'Bell', email: 'sage@example.com', phone: '0400 000 010' }, scores: [null, null, null, null],
+        answers: ['Please consider this my application for the role. I have attached my experience and I am available to start immediately if selected.', 'Please consider this my application for the role. I have attached my experience and I am available to start immediately if selected.'] },
+      { contact: { first_name: 'Blake', last_name: 'Hart', email: 'blake@example.com', phone: '0400 000 011' }, scores: [null, null, null, null],
+        answers: ['I ran a 200-person meetup series for three years, from budget to speakers. Attendance was strong, but newcomers felt lost. Next time I would pair every first-timer with a host before the night starts.', 'I would read their last three investor updates, then call ten founders from different stages. That gives me specific themes to test in a two-question survey with the rest. Busy people answer short questions.'] },
+    ],
+  },
+};
+
+// A browser-only stand-in for the server, used by the public demo. Nothing leaves the page.
+window.__sealedDemo = (() => {
+  const GRACE = 15;
+  let db;
+  let persona;
+  let seq;
+  let currentQuery = new URLSearchParams();
+  const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
+  const uid = () => `id${++seq}`;
+  const newCode = () => {
+    const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 6 }, (_, i) => (i === 3 ? '-' : '') + abc[Math.floor(Math.random() * abc.length)]).join('');
+  };
+  const log = (actor, action, code, detail) => db.audit.unshift({ at: Date.now(), actor, action, code: code ?? null, detail: detail ?? '' });
+  const mail = (subject, code, status = 'queued') => db.emails.unshift({ subject, code: code ?? null, status, send_after: Date.now() + (status === 'queued' ? GRACE * 60_000 : 0), sent_at: status === 'sent' ? Date.now() : null, error: null });
+  const fillQuestions = (qs) => qs.map((q) => ({ id: uid(), prompt: q.prompt, guidance: q.guidance, word_limit: q.word_limit, weight: q.weight, min_words: q.min_words ?? 0, screened: q.screened === false || q.screened === 0 ? 0 : 1 }));
+  const DEFAULT_RULES = { repeat_question: true, same_answer: true, low_variety: true, near_copy: true, ai: true, ai_bar: 'low', extra_check: '' };
+  const QUEUE = ['through', 'sampled', 'restored'];
+  const makeStages = () => demoStages.map((x, i) => ({ id: uid(), position: i, booking_url: '', prompt: '', due_days: 7, stall_days: 5, email_text: '', ...x }));
+  const blindStage = (r, st) => st.type === 'task' && r.stages.filter((x) => x.position < st.position).every((x) => x.type === 'task');
+
+  function reset() {
+    seq = 0;
+    const now = Date.now();
+    db = {
+      org: demoData.org, retention: 180, applied: false, audit: [], emails: [],
+      brand: { accent: '#0f6b52', header: 'light', logo: null, font: 'Geist', icon: null },
+      flags: [],
+      subjects: { confirm: 'We received your application for {{role}}', advance: 'Next steps for {{role}}', decline: 'Your application for {{role}}' },
+      auto: { confirm: true, advance: true, decline: true },
+      privacy: 'DRAFT. A real organisation would have this reviewed by a lawyer.\n\nWhat we collect\nYour answers and contact details, only to assess this application.\n\nWho sees what\nReviewers see your answers with identifying details removed. A hiring lead can open your contact details only if you are advanced, and each opening is logged.\n\nAutomated first check\nAn automated check reads your answers with your details removed. It can set an application aside for a hiring lead to check. People make every decision.\n\nHow long we keep it\nContact details of declined applicants are deleted automatically. You can withdraw at any time.',
+      templates: {
+        confirm: 'Hi {{first_name}},\n\nThanks for applying for {{role}} at {{org}}. Your reference is {{code}}.\n\nCheck progress or withdraw here:\n{{status_link}}',
+        advance: 'Hi {{first_name}},\n\nGood news. Your answers for {{role}} scored highly and we would like to meet you.',
+        decline: 'Hi {{first_name}},\n\nThank you for applying for {{role}}. We have decided not to move forward this time. This decision was made without anyone seeing your name or contact details.',
+      },
+      users: demoData.team.map((t) => ({ id: t.key, name: t.name, email: t.email, role: t.role, master: Boolean(t.master), areas: [...t.areas], joined: 1 })),
+      areas: ['Investment', 'Platform', 'Operations'],
+      roles: [], apps: [], scores: [],
+    };
+    const open = {
+      id: uid(), slug: 'investment-analyst', title: demoData.openRole.title, summary: demoData.openRole.summary, description: demoData.openRole.description,
+      closes_at: now + 14 * 86_400_000, status: 'open', reviewers: [...demoData.openRole.reviewers], questions: fillQuestions(demoData.openRole.questions),
+      must_haves: [...demoData.openRole.must_haves], scan_enabled: true, sample_percent: 10,
+      stages: makeStages(), area: demoData.openRole.area, reviews_per: demoData.openRole.reviews_per, leads: [...demoData.openRole.leads], scan_rules: { ...DEFAULT_RULES },
+    };
+    const closed = {
+      id: uid(), slug: 'platform-associate', title: demoData.closedRole.title, summary: demoData.closedRole.summary, description: demoData.closedRole.description,
+      closes_at: now - 3 * 86_400_000, status: 'closed', reviewers: [...demoData.closedRole.reviewers], questions: fillQuestions(demoData.closedRole.questions),
+      must_haves: [], scan_enabled: true, sample_percent: 10,
+      stages: makeStages(), area: demoData.closedRole.area, reviews_per: demoData.closedRole.reviews_per, leads: [...demoData.closedRole.leads], scan_rules: { ...DEFAULT_RULES },
+    };
+    db.roles.push(closed, open);
+    for (const a of demoData.closedRole.applicants) {
+      const app = { id: uid(), role_id: closed.id, code: newCode(), status: 'submitted', contact: a.contact, submitted_at: now - 8 * 86_400_000, token: uid(), answers: {}, scan: 'through', reasons: [] };
+      closed.questions.forEach((q, i) => {
+        app.answers[q.id] = redact(a.answers[i], a.contact).text;
+        if (a.scores[i] != null) db.scores.push({ app: app.id, q: q.id, reviewer: 'priya', score: a.scores[i], note: '' });
+        if (a.scores[i + 2] != null) db.scores.push({ app: app.id, q: q.id, reviewer: 'sam', score: a.scores[i + 2], note: '' });
+      });
+      runScan(closed, app, [], a);
+      db.apps.push(app);
+      syncAssign(closed);
+      if (a.moveTo) {
+        const st = closed.stages.find((x) => x.name === a.moveTo);
+        Object.assign(app, { status: 'advanced', stage_id: st.id, entered_at: now - 2 * 86_400_000, opened: Boolean(a.opened), events: [{ stage: st.id, at: now - 2 * 86_400_000 }], work: a.work ? { [st.id]: { text: a.work, submitted_at: now - 86_400_000 } } : {}, feedback: [] });
+      }
+      log('applicant', 'application_received', app.code, closed.title);
+    }
+    log('system', 'role_closed', null, closed.title);
+    persona = 'applicant';
+  }
+  // Gives each application to the reviewers with the fewest, as the real server does.
+  function syncAssign(r) {
+    const want = r.reviews_per > 0 ? Math.min(r.reviews_per, r.reviewers.length) : r.reviewers.length;
+    const load = Object.fromEntries(r.reviewers.map((k) => [k, 0]));
+    const live = db.apps.filter((a) => a.role_id === r.id && a.status === 'submitted');
+    for (const a of live) {
+      a.assigned = QUEUE.includes(a.scan) ? (a.assigned ?? []).filter((k) => k in load) : [];
+      a.assigned.forEach((k) => { load[k] += 1; });
+    }
+    for (const a of live.filter((x) => QUEUE.includes(x.scan))) {
+      while (a.assigned.length > want) {
+        const free = a.assigned.find((k) => !db.scores.some((s) => s.app === a.id && s.reviewer === k));
+        if (!free) break;
+        a.assigned = a.assigned.filter((k) => k !== free);
+        load[free] -= 1;
+      }
+      const options = r.reviewers.filter((k) => !a.assigned.includes(k)).sort((x, y) => load[x] - load[y]);
+      for (const k of options.slice(0, Math.max(want - a.assigned.length, 0))) {
+        a.assigned.push(k);
+        load[k] += 1;
+      }
+    }
+  }
+
+  // Rule checks are real. The AI part is a stand-in, because a demo page makes no outside calls.
+  function runScan(r, app, mustHaveNo, fixture) {
+    const others = db.apps.filter((a) => a.role_id === r.id && a.status !== 'withdrawn').map((a) => ({ code: a.code, text: Object.values(a.answers).join(' ') }));
+    const screened = r.questions.filter((q) => q.screened);
+    const rules = r.scan_rules ?? DEFAULT_RULES;
+    const { hard, soft } = ruleCheck({ questions: screened.map((q) => ({ ...q, position: r.questions.indexOf(q) })), answers: app.answers, mustHaveNo, others, rules });
+    const ai = rules.ai === false ? [] : r.questions.flatMap((q, i) => {
+      if (!q.screened) return [];
+      const reason = fixture ? fixture.ai?.[i] : (app.answers[q.id].trim().split(/\s+/).length < (rules.ai_bar === 'firm' ? 25 : 12) ? 'Too brief to show anything specific.' : null);
+      return reason ? [`Answer ${i + 1}: ${reason}`] : [];
+    });
+    const all = [...hard, ...soft, ...ai];
+    app.reasons = all;
+    app.scan = !all.length ? 'through' : fixture?.sampled ? 'sampled' : 'set_aside';
+    log('system', app.scan === 'through' ? 'scan_through' : app.scan === 'sampled' ? 'scan_sampled' : 'scan_set_aside', app.code, 'Rules and AI');
+  }
+  reset();
+
+  const me = () => (persona === 'applicant' ? null : db.users.find((u) => u.id === ({ reviewer: 'sam', lead: 'jess', master: 'alex' })[persona]));
+  const isLead = (r) => me()?.role === 'admin' && (me().master || (r.leads ?? []).includes(me().id));
+  const sharedTo = (a, k) => (a.assigned ?? []).includes(k);
+  const role = (id) => db.roles.find((r) => r.id === id) ?? fail(404, 'That role no longer exists.');
+  const roleBySlug = (slug) => db.roles.find((r) => r.slug === slug) ?? fail(404, 'We could not find that role.');
+  const appsOf = (id) => db.apps.filter((a) => a.role_id === id && a.status !== 'withdrawn');
+  const reviewerNames = (r) => r.reviewers.map((k) => db.users.find((u) => u.id === k)?.name).filter(Boolean);
+
+  function progress(r, userId) {
+    const live = appsOf(r.id).filter((a) => a.status === 'submitted' && QUEUE.includes(a.scan) && sharedTo(a, userId));
+    const ids = new Set(live.map((a) => a.id));
+    return { total: live.length * r.questions.length, scored: db.scores.filter((s) => s.reviewer === userId && ids.has(s.app)).length };
+  }
+  function computeRows(r) {
+    const totalWeight = r.questions.reduce((s, q) => s + q.weight, 0) || 1;
+    const rows = appsOf(r.id).filter((a) => QUEUE.includes(a.scan)).map((a) => {
+      const assigned = a.assigned ?? [];
+      const scores = db.scores.filter((s) => s.app === a.id && assigned.includes(s.reviewer));
+      const per = {};
+      let weighted = 0;
+      let complete = assigned.length > 0;
+      let discuss = false;
+      for (const q of r.questions) {
+        const vals = scores.filter((s) => s.q === q.id).map((s) => s.score);
+        if (vals.length < assigned.length) complete = false;
+        if (!vals.length) { per[q.id] = null; continue; }
+        const mean = vals.reduce((x, y) => x + y, 0) / vals.length;
+        per[q.id] = Math.round(mean * 10) / 10;
+        weighted += mean * q.weight;
+        if (Math.max(...vals) - Math.min(...vals) >= 2) discuss = true;
+      }
+      return { code: a.code, status: a.status, scan: a.scan, stage: r.stages?.find((x) => x.id === a.stage_id)?.name ?? null, complete, discuss, per_question: per, assigned: assigned.map((k) => db.users.find((u) => u.id === k)?.name).filter(Boolean), assigned_ids: [...assigned], can_undo: a.status !== 'submitted' && !a.opened, score: scores.length ? Math.round((weighted / totalWeight) * 100) / 100 : null };
+    });
+    return rows.sort((x, y) => (y.score ?? -1) - (x.score ?? -1) || x.code.localeCompare(y.code));
+  }
+  const gate = (r) => {
+    const u = me();
+    if (!r.reviewers.includes(u.id)) return 0;
+    const p = progress(r, u.id);
+    return p.total - p.scored;
+  };
+  const appBy = (id, code) => appsOf(id).find((a) => a.code === code) ?? fail(404, 'We could not find that application.');
+  function enter(r, a, st, email = true) {
+    a.stage_id = st.id;
+    a.entered_at = Date.now();
+    (a.events ??= []).push({ stage: st.id, at: Date.now() });
+    if (email) mail(`Next step: ${st.name} for ${r.title}`, a.code);
+  }
+  function decide(r, a, decision) {
+    a.status = decision;
+    log(me().name, decision, a.code, r.title);
+    if (decision === 'advanced' && r.stages?.length) enter(r, a, r.stages[0]);
+    else mail(decision === 'advanced' ? `Next steps for ${r.title}` : `Your application for ${r.title}`, a.code);
+  }
+  const identityOpen = (r, a) => {
+    if (a.status !== 'advanced') return false;
+    const st = r.stages?.find((x) => x.id === a.stage_id);
+    return !st || !blindStage(r, st);
+  };
+  const roleBody = (r, b) => {
+    if (!appsOf(r.id).length) {
+      r.must_haves = [...(b.must_haves ?? [])];
+    }
+    Object.assign(r, { scan_enabled: b.scan_enabled !== false, area: b.area ?? '', reviews_per: Number(b.reviews_per) || 0, scan_rules: { ...DEFAULT_RULES, ...(b.scan_rules ?? {}) } });
+    if (Array.isArray(b.stages)) {
+      r.stages = b.stages.map((x, i) => {
+        if (!String(x.name ?? '').trim()) fail(400, `Stage ${i + 1} needs a name.`);
+        return { id: x.id ?? uid(), position: i, booking_url: '', prompt: '', due_days: 7, stall_days: 5, email_text: '', ...x, position: i };
+      });
+    }
+    r.leads = [...new Set([...(b.lead_ids ?? []), ...(me().master ? [] : [me().id])])];
+    r.sample_percent = Number(b.sample_percent ?? 10);
+    Object.assign(r, { title: String(b.title ?? '').trim() || fail(400, 'Role title is required.'), summary: b.summary ?? '', description: b.description ?? '', closes_at: Number(b.closes_at), reviewers: [...(b.reviewer_ids ?? [])] });
+    if (!appsOf(r.id).length) {
+      r.questions = fillQuestions((b.questions ?? []).map((q, i) => ({
+        prompt: String(q.prompt ?? '').trim() || fail(400, `Question ${i + 1} is required.`),
+        guidance: q.guidance ?? '', word_limit: Number(q.word_limit) || 300, weight: Number(q.weight) || 1, min_words: Number(q.min_words) || 0, screened: q.screened,
+      })));
+    } else {
+      (b.questions ?? []).forEach((q, i) => { if (r.questions[i]) r.questions[i].screened = q.screened === false || q.screened === 0 ? 0 : 1; });
+    }
+    if (r.id) syncAssign(r);
+  };
+
+  const routes = [
+    ['GET', /^\/api\/public\/privacy$/, () => ({ org: db.org, text: db.privacy })],
+    ['POST', /^\/api\/public\/roles\/([^/]+)\/draft$/, () => ({ resume_path: '/apply/one-time-link' })],
+    ['GET', /^\/api\/setup$/, () => ({
+      steps: [
+        { key: 'brand', label: 'Add your name, logo and colour', action: 'Set up brand', path: '/settings', done: true },
+        { key: 'team', label: 'Invite your reviewers', action: 'Invite team', path: '/team', done: true },
+        { key: 'role', label: 'Create your first role', action: 'Create role', path: '/roles/new', done: true },
+        { key: 'open', label: 'Open applications and share the link', action: 'See roles', path: '/dashboard', done: true },
+      ],
+    })],
+    ['POST', /^\/api\/roles\/([^/]+)\/duplicate$/, (id) => {
+      const from = role(id);
+      const copy = { ...from, id: uid(), slug: `role-${seq}`, title: `${from.title} (copy)`, status: 'draft', closes_at: Date.now() + 21 * 86_400_000, questions: fillQuestions(from.questions), reviewers: [...from.reviewers], must_haves: [...(from.must_haves ?? [])] };
+      db.roles.unshift(copy);
+      log(me().name, 'role_created', null, copy.title);
+      return { id: copy.id };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)\/previous$/, (id) => {
+      const r = role(id);
+      const u = me();
+      const steps = Number(currentQuery.get('steps')) || 1;
+      const ids = new Set(appsOf(id).filter((a) => a.status === 'submitted').map((a) => a.id));
+      const mine = db.scores.filter((s) => s.reviewer === u.id && ids.has(s.app));
+      const row = mine[mine.length - steps] ?? fail(404, 'There is no earlier answer to go back to.');
+      const q = r.questions.find((x) => x.id === row.q);
+      const { total, scored } = progress(r, u.id);
+      return { done: false, back: true, total, scored: Math.max(scored - steps, 0), role: r.title, score: row.score, note: row.note, ticket: `${row.app}|${row.q}`, text: db.apps.find((a) => a.id === row.app).answers[row.q], question: { prompt: q.prompt, guidance: q.guidance, position: r.questions.indexOf(q) + 1, count: r.questions.length } };
+    }],
+    ['POST', /^\/api\/flags$/, (b) => {
+      const [appId, q] = b.ticket.split('|');
+      const app = db.apps.find((a) => a.id === appId);
+      if (!b.phrase?.trim() || !app.answers[q].includes(b.phrase.trim())) fail(400, 'Copy the words exactly as they appear in the answer.');
+      db.flags.push({ id: uid(), app: appId, code: app.code, role_id: app.role_id, phrase: b.phrase.trim(), open: true });
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/flags\/([^/]+)\/remove$/, (id) => {
+      const f = db.flags.find((x) => x.id === id);
+      const app = db.apps.find((a) => a.id === f.app);
+      for (const k of Object.keys(app.answers)) app.answers[k] = app.answers[k].split(f.phrase).join('[detail removed]');
+      f.open = false;
+      log(me().name, 'flag_removed', f.code);
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/flags\/([^/]+)\/dismiss$/, (id) => { db.flags.find((x) => x.id === id).open = false; return { ok: true }; }],
+    ['POST', /^\/api\/roles\/([^/]+)\/undo-recent$/, (id) => {
+      const recent = appsOf(id).filter((a) => a.status !== 'submitted' && !a.opened);
+      for (const a of recent) {
+        a.status = 'submitted';
+        a.stage_id = null;
+        a.events = [];
+        db.emails.filter((x) => x.code === a.code && x.status === 'queued').forEach((x) => { x.status = 'cancelled'; });
+        log(me().name, 'decision_undone', a.code, role(id).title);
+      }
+      return { undone: recent.length };
+    }],
+    ['GET', /^\/api\/public\/roles$/, () => ({ org: db.org, roles: db.roles.filter((r) => r.status === 'open') })],
+    ['GET', /^\/api\/public\/roles\/([^/]+)$/, (slug) => {
+      const r = roleBySlug(slug);
+      return { org: db.org, retention_days: db.retention, role: { ...r, open: r.status === 'open' }, questions: r.questions, must_haves: r.must_haves ?? [], scan_enabled: r.scan_enabled };
+    }],
+    ['POST', /^\/api\/public\/roles\/([^/]+)\/preview$/, (slug, b) => {
+      const answers = {};
+      for (const q of roleBySlug(slug).questions) answers[q.id] = redact(b.answers?.[q.id], b.contact);
+      return { answers };
+    }],
+    ['POST', /^\/api\/public\/roles\/([^/]+)\/apply$/, (slug, b) => {
+      const r = roleBySlug(slug);
+      const email = b.contact.email.trim().toLowerCase();
+      if (appsOf(r.id).some((a) => a.contact.email.toLowerCase() === email)) fail(409, 'This email address has already applied for this role. Use the link in your confirmation email to check progress.');
+      const app = { id: uid(), role_id: r.id, code: newCode(), status: 'submitted', contact: b.contact, submitted_at: Date.now(), token: uid(), answers: {}, scan: 'through', reasons: [] };
+      for (const q of r.questions) app.answers[q.id] = redact(b.answers[q.id], b.contact).text;
+      const noList = (r.must_haves ?? []).filter((_, i) => b.must_haves?.[i] === false);
+      if (r.scan_enabled) runScan(r, app, noList);
+      db.apps.push(app);
+      syncAssign(r);
+      db.applied = true;
+      log('applicant', 'application_received', app.code, r.title);
+      mail(`We received your application for ${r.title}`, app.code, 'sent');
+      return { code: app.code, status_path: `/status/${app.token}` };
+    }],
+    ['GET', /^\/api\/public\/status\/([^/]+)$/, (t) => {
+      const a = db.apps.find((x) => x.token === t) ?? fail(404, 'This link is not valid.');
+      const r = role(a.role_id);
+      const state = a.status === 'submitted' ? (r.status === 'closed' ? 'in_review' : 'received') : a.status;
+      const st = r.stages?.find((x) => x.id === a.stage_id);
+      return { org: db.org, role: r.title, code: a.code, state, submitted_at: a.submitted_at, closes_at: r.closes_at, retention_days: db.retention, can_withdraw: a.status === 'submitted' || (a.status === 'advanced' && st?.type !== 'hired'), journey: (r.stages ?? []).map((x) => x.name), opened: Boolean(a.opened), stage: st ? { name: st.name, type: st.type, prompt: st.prompt, booking_url: st.booking_url, due_at: st.type === 'task' ? a.entered_at + st.due_days * 86_400_000 : null, submitted_at: a.work?.[st.id]?.submitted_at ?? null, anonymous: blindStage(r, st), index: r.stages.indexOf(st) } : null };
+    }],
+    ['POST', /^\/api\/public\/status\/([^/]+)\/work$/, (t, b) => {
+      const a = db.apps.find((x) => x.token === t) ?? fail(404, 'This link is not valid.');
+      if (!String(b.text ?? '').trim()) fail(400, 'Your response is required.');
+      (a.work ??= {})[a.stage_id] = { text: redact(b.text, a.contact).text, submitted_at: Date.now() };
+      log('applicant', 'stage_work_received', a.code);
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/public\/status\/([^/]+)\/withdraw$/, (t) => {
+      const a = db.apps.find((x) => x.token === t) ?? fail(404, 'This link is not valid.');
+      a.status = 'withdrawn';
+      a.answers = {};
+      a.contact = { email: '' };
+      db.scores = db.scores.filter((s) => s.app !== a.id);
+      log('applicant', 'application_withdrawn', a.code, 'Answers and contact details deleted');
+      return { ok: true };
+    }],
+    ['GET', /^\/api\/roles$/, () => {
+      const u = me();
+      const list = u.master ? db.roles : db.roles.filter((r) => isLead(r) || (r.reviewers.includes(u.id) && r.status !== 'draft'));
+      return {
+        roles: list.map((r) => {
+          const apps = appsOf(r.id);
+          return { id: r.id, slug: r.slug, title: r.title, status: r.status, closes_at: r.closes_at, applications: apps.length, decided: apps.filter((a) => a.status !== 'submitted').length, can_manage: isLead(r), has_pipeline: Boolean(r.stages?.length), area: r.area, set_aside: isLead(r) ? apps.filter((a) => a.scan === 'set_aside').length : null, reviewers: reviewerNames(r), mine: r.reviewers.includes(u.id) ? progress(r, u.id) : null };
+        }),
+      };
+    }],
+    ['POST', /^\/api\/roles$/, (b) => {
+      const r = { id: uid(), slug: `role-${seq}`, status: 'draft', questions: [], stages: [], reviewers: [], leads: [], must_haves: [], sample_percent: 10, scan_enabled: true };
+      roleBody(r, b);
+      db.roles.unshift(r);
+      log(me().name, 'role_created', null, r.title);
+      return { id: r.id, slug: r.slug };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)$/, (id) => {
+      const r = role(id);
+      return { role: { ...r, scan_rules: { ...DEFAULT_RULES, ...(r.scan_rules ?? {}) } }, questions: r.questions, stages: r.stages ?? [], reviewer_ids: r.reviewers, lead_ids: r.leads ?? [], areas: db.areas, questions_locked: appsOf(id).length > 0, ai_available: true };
+    }],
+    ['PUT', /^\/api\/roles\/([^/]+)$/, (id, b) => { roleBody(role(id), b); return { ok: true }; }],
+    ['POST', /^\/api\/roles\/([^/]+)\/status$/, (id, b) => {
+      const r = role(id);
+      if (b.status === 'open') {
+        if (!r.questions.length) fail(400, 'Add at least one question before opening this role.');
+        if (!r.reviewers.length) fail(400, 'Assign at least one reviewer before opening this role.');
+        if (r.closes_at <= Date.now()) fail(400, 'Choose a closing date in the future before opening this role.');
+        if (appsOf(id).some((a) => a.status !== 'submitted')) fail(409, 'Decisions have been made, so this role cannot be reopened.');
+      }
+      r.status = b.status;
+      log(me().name, b.status === 'open' ? 'role_opened' : 'role_closed', null, r.title);
+      return { ok: true };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)\/next$/, (id) => {
+      const r = role(id);
+      const u = me();
+      if (!r.reviewers.includes(u.id)) fail(403, 'Only assigned reviewers score this role. Switch to the Reviewer view.');
+      const { total, scored } = progress(r, u.id);
+      for (const q of r.questions) {
+        const pending = appsOf(id).filter((a) => a.status === 'submitted' && QUEUE.includes(a.scan) && sharedTo(a, u.id) && !db.scores.some((s) => s.app === a.id && s.q === q.id && s.reviewer === u.id));
+        if (pending.length) {
+          const pick = pending[0];
+          return { done: false, total, scored, role: r.title, ticket: `${pick.id}|${q.id}`, text: pick.answers[q.id], question: { prompt: q.prompt, guidance: q.guidance, position: r.questions.indexOf(q) + 1, count: r.questions.length } };
+        }
+      }
+      return { done: true, total, scored, role: r.title };
+    }],
+    ['POST', /^\/api\/scores$/, (b) => {
+      const [app, q] = b.ticket.split('|');
+      const existing = db.scores.find((s) => s.app === app && s.q === q && s.reviewer === me().id);
+      if (existing) Object.assign(existing, { score: b.score, note: b.note ?? '' });
+      else db.scores.push({ app, q, reviewer: me().id, score: b.score, note: b.note ?? '' });
+      return { ok: true };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)\/board$/, (id) => {
+      const r = role(id);
+      const remaining = gate(r);
+      if (remaining > 0) return { locked: true, remaining, role: r };
+      const pending = r.reviewers.map((k) => ({ name: db.users.find((u) => u.id === k)?.name, remaining: (({ total, scored }) => total - scored)(progress(r, k)) })).filter((p) => p.remaining > 0);
+      const everyone = appsOf(id);
+      const rows = computeRows(r);
+      const admin = isLead(r);
+      const sampled = rows.filter((x) => x.scan === 'sampled' && x.complete);
+      const aside = everyone.filter((a) => a.scan === 'set_aside');
+      const scan = admin ? {
+        enabled: r.scan_enabled, total: everyone.length, to_read: rows.length, waiting: 0, set_aside: aside.length,
+        missed: sampled.filter((x) => (x.score ?? 0) >= 3.5).length, sampled: sampled.length,
+        rows: aside.map((a) => ({ code: a.code, status: a.status, reasons: a.reasons })),
+      } : null;
+      const flags = admin ? db.flags.filter((f) => f.open && f.role_id === id).map((f) => ({ id: f.id, code: f.code, phrase: f.phrase })) : [];
+      const undoable = admin ? everyone.filter((a) => a.status !== 'submitted' && !a.opened).length : 0;
+      const rescannable = admin ? everyone.filter((a) => a.status === 'submitted' && a.scan !== 'restored' && !db.scores.some((s) => s.app === a.id)).length : 0;
+      return { flags, undoable, rescannable, scan, locked: false, role: r, questions: r.questions, rows: admin ? rows : rows.filter((x) => x.assigned_ids.includes(me().id)).map((x) => ({ ...x, scan: undefined, assigned: undefined, assigned_ids: undefined })), pending, reviewer_count: r.reviewers.length, is_admin: admin, grace_minutes: GRACE, has_pipeline: Boolean(r.stages?.length) };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)$/, (id, code) => {
+      const r = role(id);
+      const a = appBy(id, code);
+      if (gate(r) > 0 && !a.stage_id) fail(403, 'Finish your own scoring before reading other reviewers’ scores.');
+      const admin = isLead(r);
+      if (!admin && !(a.stage_id && r.reviewers.includes(me().id)) && !(QUEUE.includes(a.scan) && sharedTo(a, me().id))) fail(403, 'This application is not in your reading list.');
+      const myCard = (stId) => (a.feedback ?? []).find((f) => f.stage === stId && f.user === me().id);
+      const pipeline = r.stages?.length && a.stage_id ? {
+        current_id: a.stage_id,
+        my_feedback: myCard(a.stage_id) ?? null,
+        stages: r.stages.map((x) => ({
+          id: x.id, name: x.name, type: x.type, blind: blindStage(r, x), work: a.work?.[x.id] ?? null,
+          feedback: admin || myCard(x.id) ? (a.feedback ?? []).filter((f) => f.stage === x.id).map((f) => ({ reviewer: db.users.find((u) => u.id === f.user)?.name, score: f.score, note: f.note })) : [],
+        })),
+      } : null;
+      const row = computeRows(r).find((x) => x.code === code) ?? { score: null, complete: false, discuss: false, per_question: {} };
+      return {
+        pipeline,
+        can_open_identity: identityOpen(r, a) && (admin || r.reviewers.includes(me().id)),
+        can_decline_in_pipeline: admin && a.status === 'advanced' && Boolean(a.stage_id),
+        assigned: admin ? (row.assigned ?? []) : undefined,
+        scan: admin ? { state: a.scan, reasons: a.reasons } : null,
+        can_restore: admin && a.scan === 'set_aside' && a.status === 'submitted',
+        can_decline_aside: admin && a.scan === 'set_aside' && a.status === 'submitted' && r.status === 'closed',
+        code, status: a.status, score: row.score, complete: row.complete, discuss: row.discuss, role: r, is_admin: admin,
+        can_decide: admin && r.status === 'closed' && row.complete && a.status === 'submitted', can_undo: admin && a.status !== 'submitted' && !a.opened, grace_minutes: GRACE,
+        answers: r.questions.map((q) => ({
+          question_id: q.id, prompt: q.prompt, weight: q.weight, average: row.per_question[q.id], text: a.answers[q.id],
+          scores: db.scores.filter((s) => s.app === a.id && s.q === q.id).map((s) => ({ reviewer: db.users.find((u) => u.id === s.reviewer)?.name, score: s.score, note: s.note })),
+        })),
+      };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/decision$/, (id, code, b) => {
+      const a = appBy(id, code);
+      if (a.scan === 'set_aside' && b.decision !== 'declined') fail(409, 'Send this application to reviewers before advancing it.');
+      decide(role(id), a, b.decision);
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/restore$/, (id, code) => {
+      const a = appBy(id, code);
+      a.scan = 'restored';
+      syncAssign(role(id));
+      log(me().name, 'scan_overruled', code, role(id).title);
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/decline-set-aside$/, (id) => {
+      const r = role(id);
+      const pending = appsOf(id).filter((a) => a.scan === 'set_aside' && a.status === 'submitted');
+      pending.forEach((a) => decide(r, a, 'declined'));
+      return { declined: pending.length };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/undo$/, (id, code) => {
+      const a = appBy(id, code);
+      if (a.opened) fail(409, 'This decision can no longer be undone, because contact details have been opened.');
+      a.status = 'submitted';
+      a.stage_id = null;
+      a.events = [];
+      db.emails.filter((m) => m.code === code && m.status === 'queued').forEach((m) => { m.status = 'cancelled'; });
+      log(me().name, 'decision_undone', code, role(id).title);
+      return { ok: true };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)\/pipeline$/, (id) => {
+      const r = role(id);
+      const admin = isLead(r);
+      const live = appsOf(id);
+      const reached = (st) => live.filter((a) => (a.events ?? []).some((e) => e.stage === st.id));
+      const days = (st) => {
+        const list = reached(st);
+        if (!list.length) return null;
+        return Math.round((list.reduce((n, a) => n + (Date.now() - a.events.find((e) => e.stage === st.id).at), 0) / list.length / 86_400_000) * 10) / 10;
+      };
+      return {
+        role: r, is_admin: admin,
+        funnel: [
+          { label: 'Applied', count: live.length },
+          { label: 'To read', count: live.filter((a) => a.scan !== 'set_aside').length },
+          ...r.stages.map((st) => ({ label: st.name, count: reached(st).length, days: days(st) })),
+        ],
+        stages: r.stages.map((st) => ({
+          id: st.id, name: st.name, type: st.type, blind: blindStage(r, st), stall_days: st.stall_days,
+          cards: live.filter((a) => a.stage_id === st.id && a.status === 'advanced').map((a) => {
+            const cards = (a.feedback ?? []).filter((f) => f.stage === st.id);
+            const waited = (Date.now() - a.entered_at) / 86_400_000;
+            const mine = cards.some((f) => f.user === me().id);
+            return {
+              code: a.code, name: a.opened && identityOpen(r, a) ? `${a.contact.first_name} ${a.contact.last_name}` : null, days: Math.floor(waited), stalled: st.type !== 'hired' && waited >= st.stall_days,
+              work_in: Boolean(a.work?.[st.id]), cards_in: cards.length,
+              score: (admin || mine) && cards.length ? Math.round((cards.reduce((n, f) => n + f.score, 0) / cards.length) * 10) / 10 : null,
+            };
+          }),
+        })),
+      };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/move$/, (id, code, b) => {
+      const r = role(id);
+      const a = appBy(id, code);
+      const target = r.stages.find((x) => x.id === b.stage_id) ?? fail(404, 'We could not find that stage.');
+      const current = r.stages.find((x) => x.id === a.stage_id);
+      if (a.opened && blindStage(r, target)) fail(409, 'This person’s name has been opened, so they cannot go back to an anonymous stage.');
+      const forward = !current || target.position > current.position;
+      enter(r, a, target, forward);
+      log(me().name, 'stage_moved', code, `${current?.name ?? 'Advanced'} to ${target.name}`);
+      return { ok: true, emailed: forward };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/feedback$/, (id, code, b) => {
+      const a = appBy(id, code);
+      a.feedback ??= [];
+      const existing = a.feedback.find((f) => f.stage === a.stage_id && f.user === me().id);
+      if (existing) Object.assign(existing, { score: b.score, note: b.note ?? '' });
+      else a.feedback.push({ stage: a.stage_id, user: me().id, score: b.score, note: b.note ?? '' });
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/decline-stage$/, (id, code) => {
+      const r = role(id);
+      const a = appBy(id, code);
+      a.status = 'declined';
+      a.stage_id = null;
+      log(me().name, 'declined', code, r.title);
+      mail(`Your application for ${r.title}`, code);
+      return { ok: true };
+    }],
+    ['GET', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/identity$/, (id, code) => {
+      const a = appBy(id, code);
+      if (!identityOpen(role(id), a)) fail(403, 'Contact details stay sealed during an anonymous stage.');
+      a.opened = true;
+      log(me().name, 'identity_opened', code, role(id).title);
+      return a.contact;
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/decline-rest$/, (id) => {
+      const r = role(id);
+      const pending = appsOf(id).filter((a) => a.status === 'submitted' && QUEUE.includes(a.scan));
+      pending.forEach((a) => decide(r, a, 'declined'));
+      return { declined: pending.length };
+    }],
+    ['GET', /^\/api\/users$/, () => ({ users: db.users, areas: db.areas })],
+    ['POST', /^\/api\/users\/([^/]+)\/access$/, (id, b) => {
+      const u = db.users.find((x) => x.id === id);
+      if (b.access) {
+        if (u.master && b.access !== 'master' && !db.users.some((x) => x.master && x.id !== id)) fail(409, 'There must always be at least one person with master access.');
+        u.master = b.access === 'master';
+        u.role = b.access === 'reviewer' ? 'reviewer' : 'admin';
+        log(me().name, 'access_changed', null, `${u.name}: ${b.access}`);
+      }
+      if (b.areas) u.areas = b.areas;
+      if (!u.master) {
+        for (const r of db.roles.filter((x) => x.status !== 'closed' && x.area && u.areas.includes(x.area))) {
+          const list = u.role === 'admin' ? r.leads : r.reviewers;
+          if (!list.includes(id)) list.push(id);
+          syncAssign(r);
+        }
+      }
+      return { ok: true };
+    }],
+    ['POST', /^\/api\/roles\/([^/]+)\/rescan$/, (id) => {
+      const r = role(id);
+      const apps = appsOf(id).filter((a) => a.status === 'submitted' && a.scan !== 'restored' && !db.scores.some((s) => s.app === a.id));
+      for (const a of apps) {
+        if (r.scan_enabled) {
+          const fixture = demoData.closedRole.applicants.find((x) => x.contact.email === a.contact.email);
+          runScan(r, a, [], fixture);
+        } else {
+          a.scan = 'through';
+          a.reasons = [];
+        }
+      }
+      syncAssign(r);
+      log(me().name, 'scan_rerun', null, `${r.title}: ${apps.length} applications`);
+      return { rescanned: apps.length };
+    }],
+    ['POST', /^\/api\/users$/, (b) => {
+      if (!String(b.name ?? '').trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email ?? '')) fail(400, 'Enter a name and a valid email address.');
+      const id = uid();
+      db.users.push({ id, name: b.name, email: b.email, role: b.role === 'reviewer' ? 'reviewer' : 'admin', master: b.role === 'master', areas: b.areas ?? [], joined: 0 });
+      log(me().name, 'team_invited', null, b.name);
+      return { id, invite_url: 'https://your-domain.example/invite/one-time-link' };
+    }],
+    ['POST', /^\/api\/users\/([^/]+)\/reset$/, () => ({ invite_url: 'https://your-domain.example/invite/one-time-link' })],
+    ['POST', /^\/api\/users\/([^/]+)\/remove$/, (id) => {
+      db.users = db.users.filter((u) => u.id !== id);
+      db.roles.forEach((r) => { r.reviewers = r.reviewers.filter((k) => k !== id); r.leads = (r.leads ?? []).filter((k) => k !== id); syncAssign(r); });
+      return { ok: true };
+    }],
+    ['GET', /^\/api\/settings$/, () => ({ org_name: db.org, retention_days: db.retention, templates: { ...db.templates }, mail_configured: true, ai_available: true, grace_minutes: GRACE, areas: [...db.areas], brand: { ...db.brand }, subjects: { ...db.subjects }, auto: { ...db.auto }, privacy_notice: db.privacy, fonts: ['Geist', 'DM Sans', 'Manrope', 'Libre Franklin', 'IBM Plex Sans', 'Source Serif 4', 'Fraunces'] })],
+    ['PUT', /^\/api\/settings$/, (b) => { db.org = b.org_name; db.retention = b.retention_days; db.templates = b.templates; if (Array.isArray(b.areas)) db.areas = b.areas; db.brand = { ...b.brand }; db.subjects = b.subjects; db.auto = b.auto; db.privacy = b.privacy_notice; return { ok: true }; }],
+    ['GET', /^\/api\/activity$/, () => ({ audit: db.audit, emails: db.emails, mail_configured: true })],
+  ];
+
+  return {
+    start: '/apply/investment-analyst',
+    currentUser: me,
+    brand: () => ({ ...db.brand, name: db.org }),
+    sampleFor(slug, questions) {
+      if (slug !== 'investment-analyst' || db.applied) return null;
+      const s = demoData.openRole.sample;
+      return { must_haves: demoData.openRole.must_haves.map(() => true), contact: { ...s.contact }, answers: Object.fromEntries(questions.map((q, i) => [q.id, s.answers[i]])) };
+    },
+    async api(method, fullUrl, body) {
+      const [url, search] = fullUrl.split('?');
+      currentQuery = new URLSearchParams(search ?? '');
+      for (const [m, re, fn] of routes) {
+        const match = m === method && re.exec(url);
+        if (match) {
+          // Round trip through JSON so the page cannot depend on shared object references.
+          return JSON.parse(JSON.stringify(fn(...match.slice(1), body)));
+        }
+      }
+      return fail(404, 'Not available in this demo.');
+    },
+    bar(go, render) {
+      const view = (key, label, path) => h('button', {
+        type: 'button', class: persona === key ? 'on' : null, 'aria-pressed': String(persona === key),
+        onclick: () => { persona = key; go(path); },
+      }, label);
+      return h('div', { class: 'demo-bar' }, h('div', { class: 'demo-in' },
+        h('strong', null, 'Demo with fictional data. View as:'),
+        view('applicant', 'Applicant', '/apply/investment-analyst'),
+        view('reviewer', 'Reviewer', '/dashboard'),
+        view('lead', 'Hiring lead', '/dashboard'),
+        view('master', 'Master', '/dashboard'),
+        h('button', {
+          type: 'button', class: 'reset',
+          onclick: () => {
+            try { localStorage.clear(); } catch { /* Nothing to clear. */ }
+            reset();
+            applyBrand(window.__sealedDemo.brand());
+            go('/apply/investment-analyst');
+            render();
+          },
+        }, 'Start over')));
+    },
+  };
+})();
+
+</script>
+<script>
+'use strict';
+// Every value is rendered through text nodes, never as HTML, so applicant text cannot inject markup.
+
+const DEMO = window.__sealedDemo ?? null;
+const SCORE_LABELS = ['No evidence', 'Limited', 'Solid', 'Strong', 'Exceptional'];
+const STATUS_LABELS = { submitted: 'Awaiting decision', advanced: 'Advanced', declined: 'Declined' };
+const ROLE_LABELS = { draft: 'Draft', open: 'Open', closed: 'Closed' };
+
+const state = { user: null, org: '', brand: null, path: DEMO ? DEMO.start : location.pathname };
+const root = document.getElementById('app');
+let reviewSteps = 0; // How many answers back a reviewer has stepped.
+let keyHandler = null;
+const STANDARD_STAGES = [
+  { name: 'Work task', type: 'task', prompt: 'A short task, based on the kind of work this role does. It should take under an hour.', due_days: 7, stall_days: 5 },
+  { name: 'First interview', type: 'interview', prompt: 'A 30 minute conversation with the hiring lead.', stall_days: 5 },
+  { name: 'Team interview', type: 'interview', prompt: 'Meet the people you would work with.', stall_days: 5 },
+  { name: 'References', type: 'references', prompt: 'Please share two referees, with their name, relationship and email.', stall_days: 5 },
+  { name: 'Offer', type: 'offer', stall_days: 5 },
+  { name: 'Hired', type: 'hired' },
+];
+const STAGE_TYPE_LABELS = { task: 'Work task', interview: 'Interview', references: 'References', offer: 'Offer', hired: 'Hired' };
+const ROLE_TEMPLATES = [
+  {
+    name: 'Analyst',
+    title: 'Investment Analyst',
+    summary: 'Do the research that shapes early-stage investment decisions.',
+    must_haves: ['Do you have the right to work in Australia?'],
+    questions: [
+      { prompt: 'Pick a startup you think is undervalued. Why would you back it?', guidance: 'A clear view, specific evidence and honest risks.', word_limit: 250, weight: 2, min_words: 40 },
+      { prompt: 'Tell us about something you built or organised from scratch.', guidance: 'What you personally did, what changed, and what you learned.', word_limit: 250, weight: 1, min_words: 40 },
+    ],
+  },
+  {
+    name: 'Community',
+    title: 'Community Lead',
+    summary: 'Run the programs and events that connect founders.',
+    must_haves: ['Do you have the right to work in Australia?'],
+    questions: [
+      { prompt: 'Describe an event or program you ran. What would you change next time?', guidance: 'Ownership, specifics and real reflection.', word_limit: 250, weight: 2, min_words: 40 },
+      { prompt: 'How would you find out what 50 busy founders need most?', guidance: 'A practical method that works with busy people.', word_limit: 250, weight: 1, min_words: 30 },
+    ],
+  },
+  {
+    name: 'Operations',
+    title: 'Operations Associate',
+    summary: 'Keep the firm running smoothly as it grows.',
+    must_haves: ['Do you have the right to work in Australia?'],
+    questions: [
+      { prompt: 'Tell us about a messy process you made simpler. How did you do it?', guidance: 'The starting point, what you changed, and the result.', word_limit: 250, weight: 2, min_words: 40 },
+      { prompt: 'Two urgent requests land at once and you can only do one today. How do you decide?', guidance: 'Clear reasoning and how you communicate the trade-off.', word_limit: 200, weight: 1, min_words: 30 },
+    ],
+  },
+];
+
+async function api(method, url, body) {
+  if (DEMO) return DEMO.api(method, url, body);
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    credentials: 'same-origin',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error ?? 'Something went wrong. Please try again.');
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function h(tag, props, ...children) {
+  const el = document.createElement(tag);
+  for (const [key, value] of Object.entries(props ?? {})) {
+    if (value == null || value === false) continue;
+    if (key === 'class') el.className = value;
+    else if (key === 'style') el.style.cssText = value; // A style attribute would be blocked by the security policy.
+    else if (key.startsWith('on')) el.addEventListener(key.slice(2), value);
+    else if (key === 'value') el.value = value;
+    else if (key === 'checked' || key === 'disabled' || key === 'required') el[key] = Boolean(value);
+    else el.setAttribute(key, value === true ? '' : value);
+  }
+  for (const child of children.flat(Infinity)) {
+    if (child == null || child === false) continue;
+    el.append(child.nodeType ? child : document.createTextNode(String(child)));
+  }
+  return el;
+}
+
+function go(path, { replace = false } = {}) {
+  state.path = path;
+  reviewSteps = 0;
+  if (!DEMO) history[replace ? 'replaceState' : 'pushState']({}, '', path);
+  window.scrollTo(0, 0);
+  render();
+}
+window.addEventListener('popstate', () => { state.path = location.pathname; render(); });
+
+function toast(message) {
+  document.querySelector('.toast')?.remove();
+  const el = h('div', { class: 'toast', role: 'status' }, message);
+  document.body.append(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+const fmtDate = (ms) => new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDateTime = (ms) => new Date(ms).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const wordCount = (s) => (s.trim() ? s.trim().split(/\s+/).length : 0);
+const toLocalInput = (ms) => {
+  const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60_000);
+  return d.toISOString().slice(0, 16);
+};
+const store = {
+  get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+  set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Drafts are a convenience only. */ } },
+  del(key) { try { localStorage.removeItem(key); } catch { /* Drafts are a convenience only. */ } },
+};
+
+// Turns "[name removed]" markers into solid redaction bars.
+function redacted(text) {
+  const parts = String(text).split(/(\[(?:name|email|phone|link|handle|detail) removed\])/g);
+  return parts.map((part) => {
+    const m = /^\[(\w+) removed\]$/.exec(part);
+    return m ? h('span', { class: 'bar', title: `${m[1]} removed` }, `${m[1]} removed`) : part;
+  });
+}
+
+function errorBox() {
+  const box = h('div', { class: 'error', role: 'alert', hidden: true });
+  box.show = (msg) => { box.textContent = msg; box.hidden = false; box.scrollIntoView({ block: 'nearest' }); };
+  box.clear = () => { box.hidden = true; };
+  return box;
+}
+
+// Runs an action with its button disabled, showing failures in the given box.
+function action(button, box, fn) {
+  return async (event) => {
+    event?.preventDefault();
+    box?.clear();
+    if (button) button.disabled = true;
+    try {
+      await fn();
+    } catch (err) {
+      if (box) box.show(err.message); else toast(err.message);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  };
+}
+
+function applyBrand(brand) {
+  state.brand = brand;
+  const root = document.documentElement.style;
+  if (brand?.accent) root.setProperty('--accent', brand.accent); else root.removeProperty('--accent');
+  if (brand?.name) document.title = brand.name;
+
+  const custom = brand?.font && brand.font !== 'Geist';
+  if (custom) {
+    let link = document.getElementById('brand-font');
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'brand-font';
+      link.rel = 'stylesheet';
+      document.head.append(link);
+    }
+    link.href = `https://fonts.googleapis.com/css2?family=${brand.font.replace(/ /g, '+')}:wght@400;500;600&display=swap`;
+    root.setProperty('--sans', `"${brand.font}", "Helvetica Neue", Arial, sans-serif`);
+  } else {
+    root.removeProperty('--sans');
+  }
+  if (brand?.icon) {
+    let icon = document.querySelector('link[rel="icon"]');
+    if (!icon) {
+      icon = document.createElement('link');
+      icon.rel = 'icon';
+      document.head.append(icon);
+    }
+    icon.href = brand.icon;
+  }
+}
+
+function brandMark() {
+  const b = state.brand;
+  if (b?.logo) return h('img', { class: 'logo', src: b.logo, alt: b.name ?? 'Home' });
+  return b?.name ?? 'Sealed';
+}
+
+function shell(children, { narrow = false, hero = null } = {}) {
+  const u = state.user;
+  const here = state.path;
+  const link = (label, path, on) => h('button', { type: 'button', class: on ? 'on' : null, onclick: () => go(path) }, label);
+  const nav = u ? [
+    link('Roles', '/dashboard', here === '/dashboard' || here.startsWith('/roles')),
+    u.master && link('Team', '/team', here === '/team'),
+    u.master && link('Emails', '/emails', here === '/emails'),
+    u.master && link('Activity', '/activity', here === '/activity'),
+    u.master && link('Settings', '/settings', here === '/settings'),
+    !DEMO && link('Account', '/account', here === '/account'),
+  ] : [];
+  return [
+    DEMO && DEMO.bar(go, render),
+    h('header', { class: `top${state.brand?.header === 'dark' ? ' dark' : ''}` }, h('div', { class: 'top-in' },
+      h('button', { type: 'button', class: 'brand', onclick: () => go(u ? '/dashboard' : '/') }, brandMark()),
+      h('nav', { class: 'nav', 'aria-label': 'Main' }, nav),
+      u && !DEMO && h('button', {
+        type: 'button', class: 'signout',
+        onclick: async () => { await api('POST', '/api/logout', {}); state.user = null; go('/login'); },
+      }, 'Sign out'),
+    )),
+    hero && h('section', { class: `hero${state.brand?.header === 'dark' ? ' dark' : ''}` },
+      h('div', { class: `hero-in${narrow ? ' narrow' : ''}` }, h('i', { class: 'hero-mark' }), hero)),
+    h('main', { class: `page${narrow ? ' narrow' : ''}` }, children),
+  ];
+}
+
+const paint = (nodes) => { root.replaceChildren(...nodes.flat(Infinity).filter(Boolean)); };
+
+const closeLabel = (r) => (r.status === 'closed' ? 'Applications closed' : `Closes ${fmtDate(r.closes_at)}`);
+function pill(kind, label) { return h('span', { class: `pill ${kind}` }, label); }
+
+// ---- Public: list of open roles ----
+async function viewHome() {
+  const data = await api('GET', '/api/public/roles');
+  return shell([
+    h('div', null, data.roles.length
+      ? data.roles.map((r) => h('div', { class: 'role-row' },
+        h('div', { class: 'row between' }, h('h2', null, r.title), h('button', { class: 'btn', onclick: () => go(`/apply/${r.slug}`) }, 'Apply')),
+        r.summary && h('p', null, r.summary),
+        h('p', { class: 'muted small' }, `Closes ${fmtDate(r.closes_at)}`)))
+      : h('p', { class: 'muted' }, 'There are no open roles right now.')),
+    !DEMO && h('p', { class: 'small' }, h('button', { class: 'quiet', onclick: () => go('/login') }, 'Team sign in')),
+  ], {
+    narrow: true,
+    hero: [h('h1', null, `Open roles at ${data.org}`), h('p', { class: 'lede' }, state.brand?.tagline || 'Your answers are read without your name.')],
+  });
+}
+
+// ---- Public: application flow ----
+async function viewApply(slug) {
+  const data = await api('GET', `/api/public/roles/${encodeURIComponent(slug)}`);
+  const { role, questions } = data;
+  if (!role.open) {
+    return shell([h('h1', null, role.title), h('div', null, h('p', null, `Applications for this role closed on ${fmtDate(role.closes_at)}.`))], { narrow: true });
+  }
+
+  const draftKey = `sealed-draft-${slug}`;
+  const sample = DEMO?.sampleFor?.(slug, questions);
+  const form = {
+    answers: store.get(draftKey) ?? sample?.answers ?? {},
+    contact: sample?.contact ?? { first_name: '', last_name: '', email: '', phone: '', linkedin: '' },
+    consent: false,
+    website: '',
+    must_haves: sample?.must_haves ?? data.must_haves.map(() => null),
+  };
+  const draftToken = DEMO ? null : new URLSearchParams(location.search).get('draft');
+  let resumed = false;
+  if (draftToken) {
+    try {
+      const saved = await api('GET', `/api/public/roles/${encodeURIComponent(slug)}/draft/${encodeURIComponent(draftToken)}`);
+      form.answers = saved.answers ?? {};
+      form.contact = { ...form.contact, ...saved.contact };
+      if (Array.isArray(saved.must_haves) && saved.must_haves.length) form.must_haves = saved.must_haves;
+      resumed = true;
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+  let step = 0;
+  let preview = null;
+
+  function saveLater() {
+    const area = h('div', { class: 'stack' });
+    const box = errorBox();
+    const open = () => {
+      const email = h('input', { id: 'later-email', type: 'email', autocomplete: 'email', value: form.contact.email ?? '' });
+      const send = h('button', { class: 'btn', type: 'button' }, 'Email me a link');
+      send.addEventListener('click', action(send, box, async () => {
+        const res = await api('POST', `/api/public/roles/${encodeURIComponent(slug)}/draft`, {
+          email: email.value, answers: form.answers, must_haves: form.must_haves, contact: form.contact,
+        });
+        area.replaceChildren(h('div', { class: 'notice stack' },
+          h('strong', null, 'Saved'),
+          h('span', null, 'Use this link to continue on any device.'),
+          h('span', { class: 'code wrap' }, DEMO ? 'your-domain.example/apply/one-time-link' : `${location.origin}${res.resume_path}`)));
+      }));
+      area.replaceChildren(h('label', { class: 'field', for: 'later-email' }, 'Your email', email), box, h('div', { class: 'row' }, send));
+    };
+    area.append(h('div', null, h('button', { class: 'quiet', type: 'button', onclick: open }, 'Save and finish later')));
+    return area;
+  }
+  const main = h('div', { class: 'stack lg' });
+
+  const stepper = () => h('ol', { class: 'steps', 'aria-label': 'Application steps' },
+    ['Answers', 'Details', 'Submit'].map((label, i) =>
+      h('li', { class: i === step ? 'on' : i < step ? 'done' : null, 'aria-current': i === step ? 'step' : null }, label)));
+
+  function setStep(n) {
+    step = n;
+    draw();
+    window.scrollTo(0, 0);
+  }
+
+  function drawAnswers() {
+    const box = errorBox();
+    const requirements = data.must_haves.map((m, i) => {
+      const choice = (label, value) => h('label', { class: 'choice', for: `must-${i}-${value}` },
+        h('input', {
+          id: `must-${i}-${value}`, type: 'radio', name: `must-${i}`, checked: form.must_haves[i] === value,
+          onchange: () => { form.must_haves[i] = value; },
+        }), label);
+      return h('fieldset', { class: 'must' }, h('legend', null, m), h('div', { class: 'row' }, choice('Yes', true), choice('No', false)));
+    });
+    const fields = questions.map((q, i) => {
+      const counter = h('span', { class: 'hint num' });
+      const update = (value) => {
+        const n = wordCount(value);
+        counter.textContent = q.min_words ? `${n} words · ${q.min_words} to ${q.word_limit}` : `${n} of ${q.word_limit} words`;
+        counter.className = n > q.word_limit ? 'over num small' : 'hint num';
+      };
+      const area = h('textarea', {
+        id: `answer-${i}`, value: form.answers[q.id] ?? '',
+        oninput: (e) => { form.answers[q.id] = e.target.value; update(e.target.value); store.set(draftKey, form.answers); },
+      });
+      update(form.answers[q.id] ?? '');
+      return h('label', { class: 'field', for: `answer-${i}` },
+        h('span', null, `${i + 1}. ${q.prompt}`),
+        q.guidance && h('span', { class: 'hint' }, q.guidance),
+        area, counter);
+    });
+    const next = h('button', { class: 'btn primary', type: 'submit' }, 'Next: contact details');
+    return h('form', {
+      class: 'stack lg', novalidate: true,
+      onsubmit: (e) => {
+        e.preventDefault();
+        box.clear();
+        for (const q of questions) {
+          const n = wordCount(form.answers[q.id] ?? '');
+          if (!n) return box.show(`Please answer "${q.prompt}"`);
+          if (n > q.word_limit) return box.show(`Your answer to "${q.prompt}" is over the ${q.word_limit} word limit.`);
+          if (n < q.min_words) return box.show(`Your answer to "${q.prompt}" needs at least ${q.min_words} words.`);
+        }
+        if (form.must_haves.some((v) => v === null)) return box.show('Please answer every yes or no question.');
+        return setStep(1);
+      },
+    },
+    h('p', { class: 'lede' }, 'No CV. Your answers are read without your name.'),
+    requirements.length > 0 && h('div', { class: 'stack' }, requirements),
+    h('div', { class: 'stack lg' }, fields),
+    box, h('div', { class: 'row' }, next), saveLater());
+  }
+
+  function drawContact() {
+    const box = errorBox();
+    const c = form.contact;
+    const field = (key, label, type, hint, auto) => h('label', { class: 'field', for: `contact-${key}` },
+      h('span', null, label), hint && h('span', { class: 'hint' }, hint),
+      h('input', { id: `contact-${key}`, type, value: c[key] ?? '', autocomplete: auto, oninput: (e) => { c[key] = e.target.value; } }));
+    const next = h('button', { class: 'btn primary', type: 'submit' }, 'Next: check what reviewers will see');
+    const submit = action(next, box, async () => {
+      if (!c.first_name.trim() || !c.last_name.trim()) throw new Error('Please enter your first and last name, so we can contact you if you move forward.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())) throw new Error('Please enter a valid email address.');
+      preview = await api('POST', `/api/public/roles/${encodeURIComponent(slug)}/preview`, { answers: form.answers, contact: c });
+      setStep(2);
+    });
+    return h('form', { class: 'stack lg', novalidate: true, onsubmit: submit },
+      h('p', { class: 'lede' }, 'Sealed and stored apart from your answers. Opened only if you move forward.'),
+      h('div', { class: 'stack' },
+        h('div', { class: 'two' }, field('first_name', 'First name', 'text', null, 'given-name'), field('last_name', 'Last name', 'text', null, 'family-name')),
+        field('email', 'Email', 'email', 'We send your confirmation and outcome here.', 'email'),
+        h('div', { class: 'two' }, field('phone', 'Phone (optional)', 'tel', null, 'tel'), field('linkedin', 'LinkedIn (optional)', 'text', null, 'url'))),
+      box,
+      h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', onclick: () => setStep(0) }, 'Back'), next), saveLater());
+  }
+
+  function drawReview() {
+    const box = errorBox();
+    const removed = Object.values(preview.answers).reduce((n, a) => n + a.found.length, 0);
+    const hints = [...new Set(Object.values(preview.answers).flatMap((a) => a.hints))];
+    const submit = h('button', { class: 'btn primary', type: 'button' }, 'Submit application');
+    submit.addEventListener('click', action(submit, box, async () => {
+      if (!form.consent) throw new Error('Please tick the box to confirm how your details are handled.');
+      const res = await api('POST', `/api/public/roles/${encodeURIComponent(slug)}/apply`, {
+        answers: form.answers, contact: form.contact, consent: true, website: form.website, must_haves: form.must_haves, draft: draftToken,
+      });
+      store.del(draftKey);
+      state.justSubmitted = true;
+      if (res.status_path) go(res.status_path); else go('/');
+    }));
+    return h('div', { class: 'stack lg' },
+      removed > 0 && h('p', { class: 'lede' }, `We removed ${removed} identifying ${removed === 1 ? 'detail' : 'details'}. Go back if that changes your meaning.`),
+      hints.map((hint) => h('p', { class: 'muted small' }, hint)),
+      h('div', { class: 'two' },
+        h('section', { class: 'stack' },
+          h('div', { class: 'eyebrow' }, 'What reviewers see'),
+          questions.map((q) => h('div', { class: 'stack' }, h('h3', null, q.prompt), h('p', { class: 'pre' }, redacted(preview.answers[q.id].text))))),
+        h('section', { class: 'stack panel' },
+          h('div', { class: 'eyebrow' }, 'Sealed'),
+          h('dl', { class: 'kv' },
+            h('dt', null, 'Name'), h('dd', null, `${form.contact.first_name} ${form.contact.last_name}`),
+            h('dt', null, 'Email'), h('dd', null, form.contact.email),
+            form.contact.phone && [h('dt', null, 'Phone'), h('dd', null, form.contact.phone)],
+            form.contact.linkedin && [h('dt', null, 'LinkedIn'), h('dd', null, form.contact.linkedin)]),
+          h('p', { class: 'small muted' }, `If you do not move forward, nobody opens these. They are deleted after ${data.retention_days} days.`))),
+      h('input', { class: 'hp', type: 'text', tabindex: '-1', autocomplete: 'off', 'aria-hidden': 'true', id: 'website', oninput: (e) => { form.website = e.target.value; } }),
+      h('label', { class: 'check', for: 'consent' },
+        h('input', { id: 'consent', type: 'checkbox', onchange: (e) => { form.consent = e.target.checked; } }),
+        h('span', null, `I agree to ${data.org} storing my answers and contact details for this application. I can withdraw and delete them at any time.`,
+          data.scan_enabled && ' An automated check, which includes an AI service, first reads my answers with my details removed. People make every decision.')),
+      h('div', null, h('button', {
+        class: 'quiet', type: 'button',
+        onclick: async (e) => {
+          const notice = await api('GET', '/api/public/privacy');
+          e.target.replaceWith(h('div', { class: 'panel pre small' }, notice.text));
+        },
+      }, 'Read the privacy notice')),
+      box,
+      h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', onclick: () => setStep(1) }, 'Back'), submit));
+  }
+
+  function draw() {
+    main.replaceChildren(...[stepper(), resumed && step === 0 && h('p', { class: 'notice' }, 'Welcome back. Your saved answers are below.'), [drawAnswers, drawContact, drawReview][step]()].filter(Boolean));
+  }
+  draw();
+
+  return shell([main], {
+    narrow: true,
+    hero: [
+      h('div', { class: 'eyebrow' }, `Closes ${fmtDate(role.closes_at)}`),
+      h('h1', null, role.title),
+      role.description && h('p', { class: 'lede pre' }, role.description),
+    ],
+  });
+}
+
+// ---- Public: status page ----
+async function viewStatus(token) {
+  const s = await api('GET', `/api/public/status/${encodeURIComponent(token)}`);
+  const justSent = state.justSubmitted;
+  state.justSubmitted = false;
+  const copy = {
+    received: [justSent ? 'Application sent' : 'Application received', `Reviewers start after applications close on ${fmtDate(s.closes_at)}.`],
+    in_review: ['Being reviewed', 'Your answers are being read without your name. We will email you when there is an outcome.'],
+    advanced: ['You are moving forward', 'Your answers scored highly and the team will contact you shortly. Your contact details were opened only after this decision.'],
+    declined: ['Not moving forward this time', s.contact_deleted
+      ? 'This decision was made without anyone seeing your name or contact details. Those details have now been deleted.'
+      : `This decision was made without anyone seeing your name or contact details. They will be deleted automatically within ${s.retention_days} days.`],
+    withdrawn: ['Application withdrawn', 'Your answers and contact details have been deleted.'],
+  }[s.state];
+
+  const stage = s.stage;
+  if (stage && s.state === 'advanced') {
+    const titles = { task: stage.anonymous ? 'A short task, still anonymous' : 'A short task', interview: `Time to meet: ${stage.name}`, references: 'One last check', offer: 'We would like to make you an offer', hired: 'Welcome aboard' };
+    const notes = {
+      task: stage.anonymous ? 'Your answers stood out. You stay anonymous for this step, so your name is still sealed.' : 'Your next step is below.',
+      interview: 'The team can now see your name. Book a time that suits you.',
+      references: 'Please share your referees below.',
+      offer: 'Someone from the team will be in touch to talk it through.',
+      hired: 'We are thrilled you are joining.',
+    };
+    copy[0] = titles[stage.type];
+    copy[1] = notes[stage.type];
+  }
+  if (s.state === 'declined' && s.opened) copy[1] = 'Thank you for the time you put in. We have decided not to continue with your application.';
+
+  const later = s.journey ?? [];
+  const reached = s.state === 'advanced' ? (stage ? stage.index + 3 : 3) : ({ received: 1, in_review: 2, declined: 2 }[s.state] ?? 0);
+  const steps = later.length
+    ? [['Received', fmtDate(s.submitted_at)], ['Read without your name', ''], ...later.map((n) => [n, ''])]
+    : [['Received', fmtDate(s.submitted_at)], ['Being read, without your name', reached >= 2 ? '' : `From ${fmtDate(s.closes_at)}`], ['Outcome', s.state === 'advanced' ? 'Moving forward' : s.state === 'declined' ? 'Not this time' : '']];
+  const timeline = s.state !== 'withdrawn' && h('ol', { class: 'timeline' }, steps.map(([label, note], i) => h('li', { class: i < reached ? 'done' : null, 'aria-current': i === reached - 1 ? 'step' : null },
+    h('span', null, label), note && h('span', { class: 'hint' }, note))));
+
+  let stagePanel = null;
+  if (stage && s.state === 'advanced') {
+    if (['task', 'references'].includes(stage.type)) {
+      const area = h('textarea', { id: 'stage-work' });
+      const workBox = errorBox();
+      const send = h('button', { class: 'btn primary' }, stage.submitted_at ? 'Send an updated version' : 'Send');
+      send.addEventListener('click', action(send, workBox, async () => {
+        await api('POST', `/api/public/status/${encodeURIComponent(token)}/work`, { text: area.value });
+        toast('Sent');
+        render();
+      }));
+      stagePanel = h('section', { class: 'stack panel' },
+        h('h2', null, stage.name),
+        stage.prompt && h('p', { class: 'pre' }, stage.prompt),
+        stage.due_at && h('p', { class: 'hint' }, `Due ${fmtDate(stage.due_at)}`),
+        stage.submitted_at && h('p', { class: 'hint' }, `Received ${fmtDate(stage.submitted_at)}. You can send an update until you move to the next step.`),
+        stage.anonymous && h('p', { class: 'hint' }, 'Any name or contact details you include are removed before anyone reads it.'),
+        h('label', { class: 'field', for: 'stage-work' }, 'Your response', area),
+        workBox, h('div', { class: 'row' }, send));
+    } else if (stage.type === 'interview') {
+      stagePanel = h('section', { class: 'stack panel' },
+        h('h2', null, stage.name),
+        stage.prompt && h('p', { class: 'pre' }, stage.prompt),
+        stage.booking_url ? h('div', { class: 'row' }, h('a', { class: 'btn primary', href: stage.booking_url, target: '_blank', rel: 'noopener' }, 'Book a time')) : h('p', { class: 'hint' }, 'The team will contact you to find a time.'));
+    }
+  }
+
+  const box = errorBox();
+  let confirming = false;
+  const withdrawArea = h('div', { class: 'stack' });
+  const drawWithdraw = () => {
+    if (!s.can_withdraw) return withdrawArea.replaceChildren();
+    if (!confirming) {
+      return withdrawArea.replaceChildren(h('div', null, h('button', { class: 'quiet', onclick: () => { confirming = true; drawWithdraw(); } }, 'Withdraw my application')));
+    }
+    const yes = h('button', { class: 'btn danger' }, 'Yes, withdraw and delete');
+    yes.addEventListener('click', action(yes, box, async () => {
+      await api('POST', `/api/public/status/${encodeURIComponent(token)}/withdraw`, {});
+      render();
+    }));
+    return withdrawArea.replaceChildren(
+      h('p', null, 'This permanently deletes your answers and contact details.'),
+      h('div', { class: 'row' }, yes, h('button', { class: 'btn', onclick: () => { confirming = false; drawWithdraw(); } }, 'Keep my application')),
+    );
+  };
+  drawWithdraw();
+  const pageLink = DEMO ? null : location.href;
+  return shell([
+    stagePanel,
+    timeline,
+    s.state === 'received' && pageLink && h('div', { class: 'row' },
+      h('button', { class: 'btn', onclick: async () => {
+        try { await navigator.clipboard.writeText(pageLink); toast('Link copied'); } catch { toast('Select the address bar to copy the link'); }
+      } }, 'Copy this page\u2019s link'),
+      h('span', { class: 'hint' }, 'We also email it to you.')),
+    box, withdrawArea,
+  ].filter(Boolean), {
+    narrow: true,
+    hero: [
+      h('div', { class: 'eyebrow' }, `${s.role} · `, h('span', { class: 'code' }, s.code)),
+      h('h1', null, copy[0]),
+      h('p', { class: 'lede' }, copy[1]),
+    ],
+  });
+}
+
+// ---- Sign in ----
+function viewLogin() {
+  const box = errorBox();
+  const email = h('input', { id: 'login-email', type: 'email', autocomplete: 'username' });
+  const password = h('input', { id: 'login-password', type: 'password', autocomplete: 'current-password' });
+  const code = h('input', { id: 'login-code', type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code' });
+  const codeField = h('label', { class: 'field', for: 'login-code', hidden: true }, 'Code from your authenticator app',
+    h('span', { class: 'hint' }, 'Or use one of your recovery codes.'), code);
+  const submit = h('button', { class: 'btn primary', type: 'submit' }, 'Sign in');
+  const forgotArea = h('div', null);
+  forgotArea.append(h('button', {
+    class: 'quiet', type: 'button',
+    onclick: async () => {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) { box.show('Enter your email above first.'); return; }
+      box.clear();
+      try {
+        await api('POST', '/api/forgot', { email: email.value });
+        forgotArea.replaceChildren(h('p', { class: 'muted small' }, 'If that email has an account, a reset link is on its way. A hiring lead can also reset it for you under Team.'));
+      } catch (err) { box.show(err.message); }
+    },
+  }, 'Forgot password?'));
+  return shell([
+    h('h1', null, 'Sign in'),
+    h('form', {
+      class: 'stack',
+      onsubmit: action(submit, box, async () => {
+        const res = await api('POST', '/api/login', { email: email.value, password: password.value, code: code.value || undefined });
+        if (res.needs_code) {
+          codeField.hidden = false;
+          code.focus();
+          return;
+        }
+        state.user = res.user;
+        go('/dashboard');
+      }),
+    },
+    h('label', { class: 'field', for: 'login-email' }, 'Email', email),
+    h('label', { class: 'field', for: 'login-password' }, 'Password', password),
+    codeField,
+    box, h('div', { class: 'row' }, submit), forgotArea),
+  ], { narrow: true });
+}
+
+async function viewInvite(token) {
+  const info = await api('GET', `/api/invite/${encodeURIComponent(token)}`);
+  const box = errorBox();
+  const password = h('input', { id: 'invite-password', type: 'password', autocomplete: 'new-password' });
+  const submit = h('button', { class: 'btn primary', type: 'submit' }, 'Set password and continue');
+  return shell([
+    h('h1', null, `Welcome, ${info.name}`),
+    h('form', {
+      class: 'stack',
+      onsubmit: action(submit, box, async () => {
+        const res = await api('POST', `/api/invite/${encodeURIComponent(token)}`, { password: password.value });
+        state.user = res.user;
+        go('/dashboard');
+      }),
+    },
+    h('p', { class: 'muted' }, `Signing in as ${info.email}.`),
+    h('label', { class: 'field', for: 'invite-password' }, 'Choose a password', h('span', { class: 'hint' }, 'At least 10 characters.'), password),
+    box, h('div', { class: 'row' }, submit)),
+  ], { narrow: true });
+}
+
+// ---- Dashboard ----
+async function viewDashboard() {
+  const { roles } = await api('GET', '/api/roles');
+  const isAdmin = state.user.role === 'admin';
+  const setup = state.user.master ? await api('GET', '/api/setup') : null;
+  const doneCount = setup?.steps.filter((x) => x.done).length ?? 0;
+  const copyRole = (r) => h('button', {
+    class: 'quiet',
+    onclick: async () => {
+      try {
+        const made = await api('POST', `/api/roles/${r.id}/duplicate`, {});
+        toast('Copied as a draft');
+        go(`/roles/${made.id}/edit`);
+      } catch (err) { toast(err.message); }
+    },
+  }, 'Duplicate');
+  const roleRow = (r) => {
+    const left = r.mine ? r.mine.total - r.mine.scored : 0;
+    return h('div', { class: 'role-row' },
+      h('div', { class: 'row between' },
+        h('div', { class: 'row' }, h('h2', null, r.title), pill(r.status, ROLE_LABELS[r.status])),
+        h('div', { class: 'row' },
+          left > 0 && h('button', { class: 'btn primary', onclick: () => go(`/roles/${r.id}/review`) }, `Score ${left} ${left === 1 ? 'answer' : 'answers'}`),
+          r.status !== 'draft' && h('button', { class: 'btn', onclick: () => go(`/roles/${r.id}`) }, 'Ranking'),
+          r.status !== 'draft' && r.has_pipeline && h('button', { class: 'btn', onclick: () => go(`/roles/${r.id}/pipeline`) }, 'Pipeline'),
+          r.can_manage && h('button', { class: 'quiet', onclick: () => go(`/roles/${r.id}/edit`) }, 'Edit'),
+          r.can_manage && copyRole(r))),
+      h('p', { class: 'muted small' },
+        `${r.applications} ${r.applications === 1 ? 'application' : 'applications'}`,
+        r.area ? ` · ${r.area}` : '',
+        r.set_aside ? ` · ${r.set_aside} set aside` : '',
+        ` · ${closeLabel(r)}`,
+        r.reviewers.length ? '' : ' · No reviewers assigned'));
+  };
+  return shell([
+    h('div', { class: 'row between' }, h('h1', null, 'Roles'),
+      isAdmin && h('button', { class: 'btn primary', onclick: () => go('/roles/new') }, 'New role')),
+    setup && doneCount < setup.steps.length && h('section', { class: 'stack panel' },
+      h('div', { class: 'row between' }, h('h2', null, 'Get set up'), h('span', { class: 'hint num' }, `${doneCount} of ${setup.steps.length}`)),
+      h('div', { class: 'meter' }, h('i', { style: `width:${(doneCount / setup.steps.length) * 100}%` })),
+      h('ol', { class: 'setup' }, setup.steps.map((x) => h('li', { class: x.done ? 'done' : null },
+        h('span', { class: 'grow' }, x.label),
+        x.done ? h('span', { class: 'hint' }, 'Done') : h('button', { class: 'quiet', onclick: () => go(x.path) }, x.action))))),
+    h('div', null, roles.length ? roles.map(roleRow)
+      : h('p', { class: 'muted' }, isAdmin ? 'Create your first role to get an application link.' : 'No roles are assigned to you yet.')),
+  ]);
+}
+
+// ---- Role editor ----
+async function viewRoleEdit(id) {
+  const { users, areas } = await api('GET', '/api/users');
+  const existing = id ? await api('GET', `/api/roles/${id}`) : null;
+  const locked = existing?.questions_locked;
+  const form = existing ? {
+    title: existing.role.title, summary: existing.role.summary, description: existing.role.description,
+    closes_at: existing.role.closes_at, reviewer_ids: existing.reviewer_ids,
+    must_haves: existing.role.must_haves, scan_enabled: existing.role.scan_enabled, sample_percent: existing.role.sample_percent,
+    stages: existing.stages.map((x) => ({ ...x })), area: existing.role.area, reviews_per: existing.role.reviews_per, lead_ids: existing.lead_ids, scan_rules: existing.role.scan_rules,
+    questions: existing.questions.map((q) => ({ prompt: q.prompt, guidance: q.guidance, word_limit: q.word_limit, weight: q.weight, min_words: q.min_words, screened: Boolean(q.screened) })),
+  } : {
+    title: '', summary: '', description: '', closes_at: Date.now() + 21 * 86_400_000, reviewer_ids: [],
+    stages: STANDARD_STAGES.map((x) => ({ ...x })), must_haves: [], scan_enabled: true, sample_percent: 10, area: '', reviews_per: 0,
+    lead_ids: state.user.master ? [] : [state.user.id],
+    scan_rules: { repeat_question: true, same_answer: true, low_variety: true, near_copy: true, ai: true, ai_bar: 'low', extra_check: '' },
+    questions: [{ prompt: '', guidance: '', word_limit: 250, weight: 1, min_words: 30, screened: true }],
+  };
+  if (!existing && state.roleTemplate) {
+    const tpl = state.roleTemplate;
+    Object.assign(form, { title: tpl.title, summary: tpl.summary, must_haves: [...tpl.must_haves], questions: tpl.questions.map((q) => ({ ...q })) });
+    state.roleTemplate = null;
+  }
+  const box = errorBox();
+  const questionArea = h('div', { class: 'stack' });
+
+  function drawQuestions() {
+    questionArea.replaceChildren(...form.questions.map((q, i) => h('div', { class: 'qcard' },
+      h('label', { class: 'field', for: `q-prompt-${i}` }, `Question ${i + 1}`,
+        h('textarea', { id: `q-prompt-${i}`, style: 'min-height:70px', disabled: locked, value: q.prompt, oninput: (e) => { q.prompt = e.target.value; } })),
+      h('label', { class: 'field', for: `q-guide-${i}` }, 'What a strong answer shows',
+        h('input', { id: `q-guide-${i}`, type: 'text', disabled: locked, value: q.guidance, oninput: (e) => { q.guidance = e.target.value; } })),
+      h('div', { class: 'qgrid' },
+        h('label', { class: 'field', for: `q-min-${i}` }, 'Minimum words', h('input', { id: `q-min-${i}`, type: 'number', min: '0', max: '500', disabled: locked, value: q.min_words, oninput: (e) => { q.min_words = Number(e.target.value); } })),
+        h('label', { class: 'field', for: `q-limit-${i}` }, 'Word limit', h('input', { id: `q-limit-${i}`, type: 'number', min: '10', max: '2000', disabled: locked, value: q.word_limit, oninput: (e) => { q.word_limit = Number(e.target.value); } })),
+        h('label', { class: 'field', for: `q-weight-${i}` }, 'Weight (1 to 5)', h('input', { id: `q-weight-${i}`, type: 'number', min: '1', max: '5', disabled: locked, value: q.weight, oninput: (e) => { q.weight = Number(e.target.value); } }))),
+      h('label', { class: 'check', for: `q-screen-${i}` },
+        h('input', { id: `q-screen-${i}`, type: 'checkbox', checked: q.screened !== false, onchange: (e) => { q.screened = e.target.checked; } }),
+        h('span', null, 'Include in the first scan')),
+      !locked && form.questions.length > 1 && h('div', null, h('button', { type: 'button', class: 'quiet', onclick: () => { form.questions.splice(i, 1); drawQuestions(); } }, 'Remove question')))));
+  }
+  drawQuestions();
+
+  const ruleSwitch = (key, label, hint) => h('label', { class: 'check', for: `rule-${key}` },
+    h('input', { id: `rule-${key}`, type: 'checkbox', checked: form.scan_rules[key] !== false, onchange: (e) => { form.scan_rules[key] = e.target.checked; } }),
+    h('span', null, label, h('span', { class: 'hint block' }, hint)));
+  const screenArea = h('div', { class: 'stack', hidden: !form.scan_enabled },
+    h('div', { class: 'stack' },
+      ruleSwitch('ai', 'AI check of each answer', existing && !existing.ai_available ? 'Not connected yet, so this check is skipped.' : 'Reads answers with names removed and flags those that miss the bar.'),
+      ruleSwitch('repeat_question', 'Repeats the question', 'The answer just restates what was asked.'),
+      ruleSwitch('same_answer', 'Same answer twice', 'The same text is used for two questions.'),
+      ruleSwitch('low_variety', 'Mostly repeated words', 'Filler or padding to reach a word count.'),
+      ruleSwitch('near_copy', 'Copy of another application', 'Nearly identical to someone who applied earlier.')),
+    h('label', { class: 'field', for: 'rule-bar' }, 'How firm the AI check is',
+      h('select', { id: 'rule-bar', onchange: (e) => { form.scan_rules.ai_bar = e.target.value; } },
+        h('option', { value: 'low', selected: form.scan_rules.ai_bar !== 'firm' }, 'Only off-topic or non-answers (recommended)'),
+        h('option', { value: 'firm', selected: form.scan_rules.ai_bar === 'firm' }, 'Also answers with nothing specific'))),
+    h('label', { class: 'field', for: 'rule-extra' }, 'Also check for (optional)',
+      h('span', { class: 'hint' }, 'For example, "Mentions a project they worked on". Keep it about the work, not the person.'),
+      h('input', { id: 'rule-extra', type: 'text', maxlength: '300', value: form.scan_rules.extra_check ?? '', oninput: (e) => { form.scan_rules.extra_check = e.target.value; } })),
+    h('label', { class: 'field', for: 'r-must' }, 'Must-have requirements',
+      h('span', { class: 'hint' }, 'One yes or no question per line. Answering no sets an application aside. Use only true requirements.'),
+      h('textarea', { id: 'r-must', style: 'min-height:80px', disabled: locked, value: form.must_haves.join('\n'), oninput: (e) => { form.must_haves = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } })),
+    h('label', { class: 'field', for: 'r-sample' }, 'Spot-check (%)',
+      h('span', { class: 'hint' }, 'This share of the set-aside pile still goes to reviewers, as a check on the scan.'),
+      h('input', { id: 'r-sample', type: 'number', min: '0', max: '100', style: 'max-width:120px', value: form.sample_percent, oninput: (e) => { form.sample_percent = Number(e.target.value); } })));
+
+  const stageArea = h('div', { class: 'stack' });
+  function drawStages() {
+    stageArea.replaceChildren(...form.stages.map((st, i) => h('div', { class: 'qcard' },
+      h('div', { class: 'qgrid' },
+        h('label', { class: 'field', for: `st-name-${i}` }, 'Stage name', h('input', { id: `st-name-${i}`, type: 'text', value: st.name, oninput: (e) => { st.name = e.target.value; } })),
+        h('label', { class: 'field', for: `st-type-${i}` }, 'Type',
+          h('select', { id: `st-type-${i}`, onchange: (e) => { st.type = e.target.value; drawStages(); } },
+            Object.entries(STAGE_TYPE_LABELS).map(([v, l]) => h('option', { value: v, selected: st.type === v }, l))))),
+      ['task', 'interview', 'references'].includes(st.type) && h('label', { class: 'field', for: `st-prompt-${i}` }, st.type === 'task' ? 'The task' : 'What to tell them',
+        h('textarea', { id: `st-prompt-${i}`, style: 'min-height:70px', value: st.prompt ?? '', oninput: (e) => { st.prompt = e.target.value; } })),
+      st.type === 'interview' && h('label', { class: 'field', for: `st-book-${i}` }, 'Booking link',
+        h('span', { class: 'hint' }, 'From Calendly, Google Calendar or similar. It goes in the email as a button.'),
+        h('input', { id: `st-book-${i}`, type: 'text', value: st.booking_url ?? '', oninput: (e) => { st.booking_url = e.target.value; } })),
+      h('div', { class: 'qgrid' },
+        st.type === 'task' && h('label', { class: 'field', for: `st-due-${i}` }, 'Days to complete', h('input', { id: `st-due-${i}`, type: 'number', min: '1', max: '60', value: st.due_days ?? 7, oninput: (e) => { st.due_days = Number(e.target.value); } })),
+        st.type !== 'hired' && h('label', { class: 'field', for: `st-stall-${i}` }, 'Alert after (days)', h('input', { id: `st-stall-${i}`, type: 'number', min: '1', max: '60', value: st.stall_days ?? 5, oninput: (e) => { st.stall_days = Number(e.target.value); } }))),
+      h('details', null, h('summary', { class: 'quiet' }, 'Customise this email'),
+        h('label', { class: 'field', for: `st-mail-${i}` }, 'Message',
+          h('span', { class: 'hint' }, 'Leave blank for the standard message. Fields: {{first_name}}, {{role}}, {{org}}, {{stage}}, {{brief}}, {{due}}, {{booking_link}}, {{status_link}}'),
+          h('textarea', { id: `st-mail-${i}`, style: 'min-height:120px', value: st.email_text ?? '', oninput: (e) => { st.email_text = e.target.value; } }))),
+      h('div', { class: 'row' },
+        i > 0 && h('button', { type: 'button', class: 'quiet', onclick: () => { form.stages.splice(i - 1, 0, form.stages.splice(i, 1)[0]); drawStages(); } }, 'Move up'),
+        h('button', { type: 'button', class: 'quiet', onclick: () => { form.stages.splice(i, 1); drawStages(); } }, 'Remove')))));
+  }
+  drawStages();
+
+  const teamArea = h('div', { class: 'stack' });
+  function drawTeam() {
+    const person = (u, list, prefix) => h('label', { class: 'check', for: `${prefix}-${u.id}` },
+      h('input', {
+        id: `${prefix}-${u.id}`, type: 'checkbox', checked: form[list].includes(u.id),
+        onchange: (e) => { form[list] = e.target.checked ? [...form[list], u.id] : form[list].filter((x) => x !== u.id); },
+      }),
+      h('span', null, u.name, u.areas.length > 0 && h('span', { class: 'hint' }, ` · ${u.areas.join(', ')}`)));
+    const leads = users.filter((u) => u.role === 'admin' && !u.master);
+    teamArea.replaceChildren(
+      ...(leads.length ? [h('h3', null, 'Hiring leads'), ...leads.map((u) => person(u, 'lead_ids', 'lead'))] : []),
+      h('h3', null, 'Reviewers'),
+      ...users.map((u) => person(u, 'reviewer_ids', 'rev')),
+    );
+  }
+  drawTeam();
+
+  const save = h('button', { class: 'btn primary', type: 'submit' }, existing ? 'Save changes' : 'Save as draft');
+  const statusButtons = [];
+  if (existing) {
+    const s = existing.role.status;
+    const statusBtn = (label, status, cls) => {
+      const b = h('button', { class: `btn ${cls ?? ''}`, type: 'button' }, label);
+      b.addEventListener('click', action(b, box, async () => {
+        await api('PUT', `/api/roles/${id}`, form);
+        await api('POST', `/api/roles/${id}/status`, { status });
+        toast(status === 'open' ? 'Role is open. Share the application link.' : 'Role closed. Reviewers have been told.');
+        render();
+      }));
+      return b;
+    };
+    if (s !== 'open') statusButtons.push(statusBtn(s === 'draft' ? 'Save and open applications' : 'Reopen applications', 'open', 'primary'));
+    if (s === 'open') statusButtons.push(statusBtn('Close applications now', 'closed'));
+  }
+  const link = existing && existing.role.status !== 'draft'
+    ? `${location.origin}/apply/${existing.role.slug}` : null;
+
+  return shell([
+    h('h1', null, existing ? `Edit ${existing.role.title}` : 'New role'),
+    !existing && h('div', { class: 'row' }, h('span', { class: 'hint' }, 'Start from'),
+      ROLE_TEMPLATES.map((tpl) => h('button', { class: 'btn', type: 'button', onclick: () => { state.roleTemplate = tpl; render(); } }, tpl.name))),
+    link && !DEMO && h('div', { class: 'notice stack' },
+      h('strong', null, 'Application link'),
+      h('div', { class: 'row' }, h('span', { class: 'code grow', style: 'white-space:normal;overflow-wrap:anywhere' }, link),
+        h('button', { class: 'btn', type: 'button', onclick: async () => {
+          try { await navigator.clipboard.writeText(link); toast('Link copied'); } catch { toast('Select the link to copy it'); }
+        } }, 'Copy'))),
+    h('form', {
+      class: 'stack lg', novalidate: true,
+      onsubmit: action(save, box, async () => {
+        if (existing) { await api('PUT', `/api/roles/${id}`, form); toast('Saved'); render(); } else {
+          const made = await api('POST', '/api/roles', form);
+          go(`/roles/${made.id}/edit`);
+        }
+      }),
+    },
+    h('section', { class: 'stack' },
+      h('h2', null, 'The role'),
+      h('label', { class: 'field', for: 'r-title' }, 'Title', h('input', { id: 'r-title', type: 'text', value: form.title, oninput: (e) => { form.title = e.target.value; } })),
+      h('label', { class: 'field', for: 'r-summary' }, 'One line summary', h('input', { id: 'r-summary', type: 'text', value: form.summary, oninput: (e) => { form.summary = e.target.value; } })),
+      h('label', { class: 'field', for: 'r-desc' }, 'Description', h('textarea', { id: 'r-desc', value: form.description, oninput: (e) => { form.description = e.target.value; } })),
+      h('label', { class: 'field', for: 'r-close' }, 'Applications close',
+        h('span', { class: 'hint' }, 'The role closes on its own at this time, and reviewers are told.'),
+        h('input', { id: 'r-close', type: 'datetime-local', value: toLocalInput(form.closes_at), oninput: (e) => { const t = Date.parse(e.target.value); if (t) form.closes_at = t; } }))),
+    h('section', { class: 'stack' },
+      h('h2', null, 'Questions'),
+      locked && h('div', { class: 'warn' }, 'Questions are locked because people have already applied. Every applicant must answer the same questions.'),
+      questionArea,
+      !locked && h('div', null, h('button', { type: 'button', class: 'btn', onclick: () => { form.questions.push({ prompt: '', guidance: '', word_limit: 250, weight: 1, min_words: 30, screened: true }); drawQuestions(); } }, 'Add question'))),
+    h('section', { class: 'stack' },
+      h('h2', null, 'What gets screened'),
+      h('p', { class: 'muted' }, 'Anything these checks flag is set aside with a reason. Nobody is declined automatically.'),
+      h('label', { class: 'check', for: 'r-scan' },
+        h('input', { id: 'r-scan', type: 'checkbox', checked: form.scan_enabled, onchange: (e) => { form.scan_enabled = e.target.checked; screenArea.hidden = !e.target.checked; } }),
+        h('span', null, 'Run the first scan on this job')),
+      screenArea,
+      locked && h('p', { class: 'muted small' }, 'Changes apply to new applications. To apply them to existing ones, use Run scan again on the ranking page.')),
+    h('section', { class: 'stack' },
+      h('h2', null, 'Recruitment stages'),
+      h('p', { class: 'muted' }, 'After someone is advanced, they move through these in order. A work task placed first stays anonymous, and the first interview opens their name.'),
+      stageArea,
+      h('div', null, h('button', { type: 'button', class: 'btn', onclick: () => { form.stages.push({ name: 'New stage', type: 'interview', stall_days: 5 }); drawStages(); } }, 'Add stage'))),
+    h('section', { class: 'stack' },
+      h('h2', null, 'Who works on this job'),
+      h('label', { class: 'field', for: 'r-area' }, 'Job area',
+        h('span', { class: 'hint' }, 'Choosing an area brings in the people who cover it. You can change the list below.'),
+        h('select', {
+          id: 'r-area',
+          onchange: (e) => {
+            form.area = e.target.value;
+            const inArea = users.filter((u) => !u.master && u.areas.includes(form.area));
+            form.reviewer_ids = [...new Set([...form.reviewer_ids, ...inArea.filter((u) => u.role === 'reviewer').map((u) => u.id)])];
+            form.lead_ids = [...new Set([...form.lead_ids, ...inArea.filter((u) => u.role === 'admin').map((u) => u.id)])];
+            drawTeam();
+          },
+        },
+        h('option', { value: '', selected: !form.area }, 'None'),
+        areas.map((a) => h('option', { value: a, selected: form.area === a }, a)))),
+      teamArea,
+      h('label', { class: 'field', for: 'r-per' }, 'Reviews per application',
+        h('span', { class: 'hint' }, 'Applications are shared out automatically, with each new one going to the people with the fewest. Use 0 for every reviewer to read everything.'),
+        h('input', { id: 'r-per', type: 'number', min: '0', max: '20', style: 'max-width:120px', value: form.reviews_per, oninput: (e) => { form.reviews_per = Number(e.target.value); } }))),
+    box,
+    h('div', { class: 'row' }, statusButtons, save)),
+  ], { narrow: true });
+}
+
+// ---- Scoring ----
+async function viewReview(id) {
+  const next = reviewSteps > 0
+    ? await api('GET', `/api/roles/${id}/previous?steps=${reviewSteps}`)
+    : await api('GET', `/api/roles/${id}/next`);
+  if (next.done) {
+    return shell([
+      h('h1', null, 'All scored'),
+      h('p', { class: 'lede' }, `You have scored every answer for ${next.role}.`),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn primary', onclick: () => go(`/roles/${id}`) }, 'See the ranking'),
+        next.scored > 0 && h('button', { class: 'quiet', onclick: () => { reviewSteps = 1; render(); } }, 'Change a score')),
+    ], { narrow: true });
+  }
+  let chosen = next.score ?? null;
+  const box = errorBox();
+  const note = h('textarea', { id: 'score-note', style: 'min-height:70px', value: next.note ?? '' });
+  const save = h('button', { class: 'btn primary', disabled: chosen == null }, next.back ? 'Save and go forward' : 'Save and next answer');
+  const choose = (value) => {
+    chosen = value;
+    buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(j === value - 1)));
+    save.disabled = false;
+  };
+  const buttons = SCORE_LABELS.map((label, i) => h('button', {
+    type: 'button', 'aria-pressed': String(chosen === i + 1), onclick: () => choose(i + 1),
+  }, h('b', null, i + 1), label));
+  const submit = action(save, box, async () => {
+    await api('POST', '/api/scores', { ticket: next.ticket, score: chosen, note: note.value });
+    reviewSteps = Math.max(reviewSteps - 1, 0);
+    render();
+    window.scrollTo(0, 0);
+  });
+  save.addEventListener('click', submit);
+
+  // Number keys score, and Enter saves, without reaching for the mouse.
+  keyHandler = (e) => {
+    if (['TEXTAREA', 'INPUT'].includes(e.target.tagName)) return;
+    if (/^[1-5]$/.test(e.key)) { e.preventDefault(); choose(Number(e.key)); }
+    if (e.key === 'Enter' && chosen != null && e.target.tagName !== 'BUTTON') { e.preventDefault(); submit(); }
+  };
+  document.addEventListener('keydown', keyHandler);
+
+  const flagArea = h('div', { class: 'stack' });
+  const openFlag = () => {
+    const flagBox = errorBox();
+    const phrase = h('input', { id: 'flag-phrase', type: 'text' });
+    const send = h('button', { class: 'btn', type: 'button' }, 'Send to hiring lead');
+    send.addEventListener('click', action(send, flagBox, async () => {
+      await api('POST', '/api/flags', { ticket: next.ticket, phrase: phrase.value });
+      flagArea.replaceChildren(h('p', { class: 'muted small' }, 'Sent. A hiring lead can remove those words for every reviewer.'));
+    }));
+    flagArea.replaceChildren(h('label', { class: 'field', for: 'flag-phrase' }, 'Copy the words that reveal who wrote this', phrase), flagBox, h('div', { class: 'row' }, send));
+  };
+  flagArea.append(h('div', null, h('button', { class: 'quiet', type: 'button', onclick: openFlag }, 'This reveals who wrote it')));
+
+  const pct = next.total ? Math.round((next.scored / next.total) * 100) : 0;
+  return shell([
+    h('div', { class: 'stack' },
+      h('div', { class: 'row between' }, h('div', { class: 'eyebrow' }, `${next.role} · Question ${next.question.position} of ${next.question.count}`),
+        h('span', { class: 'small muted num' }, `${next.scored} of ${next.total}`)),
+      h('div', { class: 'meter' }, h('i', { style: `width:${pct}%` }))),
+    h('div', { class: 'stack' }, h('h2', { class: 'prompt' }, next.question.prompt),
+      next.question.guidance && h('p', { class: 'muted' }, next.question.guidance)),
+    h('article', { class: 'answer pre' }, redacted(next.text)),
+    h('section', { class: 'stack' },
+      h('div', { class: 'scale', role: 'group', 'aria-label': 'Score from 1 to 5' }, buttons),
+      h('label', { class: 'field', for: 'score-note' }, 'Note (optional)', note),
+      box,
+      h('div', { class: 'row between' },
+        h('div', { class: 'row' }, save,
+          next.scored > 0 && h('button', { class: 'btn', onclick: () => { reviewSteps += 1; render(); window.scrollTo(0, 0); } }, 'Previous')),
+        h('span', { class: 'hint keys' }, 'Keys 1 to 5 score. Enter saves.')),
+      flagArea),
+  ], { narrow: true });
+}
+
+// ---- Ranking ----
+async function viewBoard(id) {
+  const b = await api('GET', `/api/roles/${id}/board`);
+  if (b.locked) {
+    return shell([
+      h('h1', null, b.role.title),
+      h('p', { class: 'lede' }, `The ranking opens when you finish scoring. ${b.remaining} ${b.remaining === 1 ? 'answer' : 'answers'} left.`),
+      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => go(`/roles/${id}/review`) }, 'Continue scoring')),
+    ]);
+  }
+  const box = errorBox();
+  const undecided = b.rows.filter((r) => r.status === 'submitted');
+  const allDone = b.rows.length > 0 && b.rows.every((r) => r.complete);
+  const advanced = b.rows.some((r) => r.status === 'advanced');
+  const closed = b.role.status === 'closed';
+
+  // A two-step button, so a bulk decision always takes a second, deliberate click.
+  const twoStep = (label, confirmLabel, explain, url, done) => {
+    const area = h('div', { class: 'row' });
+    const draw = (confirming) => {
+      if (!confirming) return area.replaceChildren(h('button', { class: 'btn', onclick: () => draw(true) }, label));
+      const yes = h('button', { class: 'btn danger' }, confirmLabel);
+      yes.addEventListener('click', action(yes, box, async () => {
+        const res = await api('POST', url, {});
+        toast(done(res));
+        render();
+      }));
+      return area.replaceChildren(h('span', { class: 'grow small' }, explain), yes, h('button', { class: 'quiet', onclick: () => draw(false) }, 'Cancel'));
+    };
+    draw(false);
+    return area;
+  };
+
+  const status = (r) => {
+    if (r.status !== 'submitted') return pill(r.status, r.stage ?? STATUS_LABELS[r.status]);
+    return r.complete ? null : pill('', 'Scoring');
+  };
+  const scan = b.scan;
+  const asideOpen = scan?.rows.filter((r) => r.status === 'submitted').length ?? 0;
+  const open = (code) => go(`/roles/${id}/a/${code}`);
+
+  return shell([
+    h('div', { class: 'row between' },
+      h('div', { class: 'row' }, h('h1', null, b.role.title), pill(b.role.status, ROLE_LABELS[b.role.status])),
+      h('div', { class: 'row' },
+        b.has_pipeline && h('button', { class: 'btn', onclick: () => go(`/roles/${id}/pipeline`) }, 'Pipeline'),
+        b.is_admin && !DEMO && h('a', { class: 'quiet', href: `/api/roles/${id}/export.csv`, download: 'scores.csv' }, 'Export'))),
+    scan?.enabled && scan.total > 0 && h('dl', { class: 'tally' },
+      h('div', null, h('dt', null, 'Applied'), h('dd', { class: 'num' }, scan.total)),
+      h('div', null, h('dt', null, 'To read'), h('dd', { class: 'num' }, scan.to_read)),
+      h('div', null, h('dt', null, 'Set aside'), h('dd', { class: 'num' }, scan.set_aside)),
+      scan.waiting > 0 && h('div', null, h('dt', null, 'Scanning'), h('dd', { class: 'num' }, scan.waiting))),
+    // One or two spot-checks prove little, so the warning waits for a fair sample.
+    scan?.sampled >= 3 && scan.missed / scan.sampled >= 0.5 && h('p', { class: 'warn' }, `Reviewers rated ${scan.missed} of ${scan.sampled} spot-checks highly. The scan may be too strict, so check the set-aside pile closely.`),
+    scan?.sampled > 0 && scan.sampled < 3 && h('p', { class: 'muted small' }, `Spot-checks: ${scan.missed} of ${scan.sampled} rated highly. Too few to judge the scan yet.`),
+    b.pending.length > 0 && h('p', { class: 'muted' }, `Still scoring: ${b.pending.map((p) => `${p.name} (${p.remaining})`).join(', ')}`),
+    b.role.status === 'open' && h('p', { class: 'muted' }, 'Decisions open once applications close.'),
+    b.rows.length ? h('div', { class: 'table-wrap' }, h('table', null,
+      h('thead', null, h('tr', null,
+        h('th', { class: 'q-col' }, 'Rank'), h('th', null, 'Reference'), h('th', null, 'Score'),
+        b.questions.map((q, i) => h('th', { class: 'q-col', title: q.prompt }, `Q${i + 1}`)),
+        b.is_admin && h('th', { class: 'q-col' }, 'Reviewers'),
+        h('th', null, ''))),
+      h('tbody', null, b.rows.map((r, i) => h('tr', {
+        class: 'click', tabindex: '0', role: 'link', onclick: () => open(r.code),
+        onkeydown: (e) => { if (e.key === 'Enter') open(r.code); },
+      },
+      h('td', { class: 'num muted q-col' }, i + 1),
+      h('td', { class: 'code' }, r.code),
+      h('td', { class: 'scorecell num' }, r.score == null ? '–' : r.score.toFixed(2)),
+      b.questions.map((q) => h('td', { class: 'num muted q-col' }, r.per_question[q.id] == null ? '–' : r.per_question[q.id].toFixed(1))),
+      b.is_admin && h('td', { class: 'muted small q-col' }, (r.assigned ?? []).join(', ')),
+      h('td', null, h('div', { class: 'row end' }, r.scan === 'sampled' && pill('', 'Spot-check'), r.discuss && pill('discuss', 'Split'), status(r))))))))
+      : h('p', { class: 'muted' }, 'No applications to read yet.'),
+    b.is_admin && b.undoable > 0 && h('div', { class: 'row' }, (() => {
+      const undoAll = h('button', { class: 'btn' }, `Undo ${b.undoable} recent ${b.undoable === 1 ? 'decision' : 'decisions'}`);
+      undoAll.addEventListener('click', action(undoAll, box, async () => {
+        const res = await api('POST', `/api/roles/${id}/undo-recent`, {});
+        toast(`Undid ${res.undone}. No emails went out.`);
+        render();
+      }));
+      return undoAll;
+    })(), h('span', { class: 'hint' }, `Emails wait ${b.grace_minutes} minutes.`)),
+    b.flags?.length > 0 && h('section', { class: 'stack panel' },
+      h('h2', null, 'Reported by reviewers'),
+      b.flags.map((f) => h('div', { class: 'row between' },
+        h('span', { class: 'grow' }, h('span', { class: 'code' }, f.code), ` “${f.phrase}”`),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn', onclick: async () => { try { await api('POST', `/api/flags/${f.id}/remove`, {}); toast('Removed from every answer'); render(); } catch (err) { toast(err.message); } } }, 'Remove words'),
+          h('button', { class: 'quiet', onclick: async () => { try { await api('POST', `/api/flags/${f.id}/dismiss`, {}); render(); } catch (err) { toast(err.message); } } }, 'Keep'))))),
+    b.is_admin && closed && allDone && undecided.length > 0 && advanced && twoStep(
+      `Decline the remaining ${undecided.length}`, `Decline ${undecided.length}`,
+      `Each person is emailed in ${b.grace_minutes} minutes. Their details stay sealed.`,
+      `/api/roles/${id}/decline-rest`, (res) => `Declined ${res.declined}. Undo within ${b.grace_minutes} minutes.`,
+    ),
+    scan && scan.rows.length > 0 && h('section', { class: 'stack' },
+      h('h2', null, 'Set aside'),
+      h('p', { class: 'muted' }, 'Nobody has been declined. Check the reasons, then send any back to reviewers or decline them.'),
+      h('div', null, scan.rows.map((r) => h('button', { class: 'aside', onclick: () => open(r.code) },
+        h('span', { class: 'code' }, r.code),
+        h('span', { class: 'grow' }, r.reasons.join(' ')),
+        r.status !== 'submitted' && pill(r.status, STATUS_LABELS[r.status])))),
+      closed && asideOpen > 0 && twoStep(
+        `Decline ${asideOpen} set aside`, `Decline ${asideOpen} without reading`,
+        `Each person is emailed in ${b.grace_minutes} minutes. You have only checked the scan's reasons.`,
+        `/api/roles/${id}/decline-set-aside`, (res) => `Declined ${res.declined}. Undo within ${b.grace_minutes} minutes.`,
+      )),
+    b.is_admin && h('section', { class: 'stack' },
+      h('div', { class: 'row' },
+        h('button', { class: 'quiet', onclick: () => go(`/roles/${id}/edit`) }, 'Change what gets screened'),
+        b.rescannable > 0 && h('span', { class: 'hint' }, `${b.rescannable} ${b.rescannable === 1 ? 'application has' : 'applications have'} not been scored yet.`)),
+      b.rescannable > 0 && twoStep(
+        'Run scan again', `Rescan ${b.rescannable}`,
+        'Uses the current settings. Applications already scored or sent back by a lead are left as they are.',
+        `/api/roles/${id}/rescan`, (res) => `Rescanned ${res.rescanned}.`,
+      )),
+    box,
+  ]);
+}
+
+async function viewApplication(id, code) {
+  const base = `/api/roles/${id}/applications/${encodeURIComponent(code)}`;
+  const a = await api('GET', base);
+  const box = errorBox();
+  const post = (label, cls, path, body) => {
+    const b = h('button', { class: `btn ${cls}` }, label);
+    b.addEventListener('click', action(b, box, async () => { await api('POST', `${base}/${path}`, body); render(); }));
+    return b;
+  };
+  const undo = post('Undo decision', '', 'undo', {});
+  const identity = h('div', { class: 'stack' });
+  if (a.can_open_identity) {
+    const open = h('button', { class: 'btn primary' }, 'Open contact details');
+    open.addEventListener('click', action(open, box, async () => {
+      const c = await api('GET', `${base}/identity`);
+      undo.remove();
+      identity.replaceChildren(h('dl', { class: 'kv' },
+        h('dt', null, 'Name'), h('dd', null, `${c.first_name} ${c.last_name}`),
+        h('dt', null, 'Email'), h('dd', null, c.email),
+        c.phone && [h('dt', null, 'Phone'), h('dd', null, c.phone)],
+        c.linkedin && [h('dt', null, 'LinkedIn'), h('dd', null, c.linkedin)]),
+      h('p', { class: 'muted small' }, 'Logged. This decision is now final.'));
+    }));
+    identity.append(open);
+  }
+  const reasons = a.scan?.reasons ?? [];
+
+  let pipelineSection = null;
+  if (a.pipeline) {
+    const current = a.pipeline.stages.find((x) => x.id === a.pipeline.current_id);
+    let moveArea = null;
+    if (a.is_admin && current) {
+      const select = h('select', { id: 'move-stage', 'aria-label': 'Move to stage' }, a.pipeline.stages.map((x) => h('option', { value: x.id, selected: x.id === current.id }, x.name)));
+      const move = h('button', { class: 'btn primary' }, 'Move');
+      move.addEventListener('click', action(move, box, async () => {
+        const res = await api('POST', `${base}/move`, { stage_id: select.value });
+        toast(res.emailed ? `Moved. The email goes out in ${a.grace_minutes} minutes.` : 'Moved back. No email is sent.');
+        render();
+      }));
+      moveArea = h('div', { class: 'row' }, select, move, a.can_decline_in_pipeline && post('Decline', '', 'decline-stage', {}));
+    }
+    const scoreForm = () => {
+      if (!current) return null;
+      let chosen = a.pipeline.my_feedback?.score ?? null;
+      const note = h('textarea', { id: 'stage-note', style: 'min-height:70px', value: a.pipeline.my_feedback?.note ?? '' });
+      const save = h('button', { class: 'btn', disabled: chosen == null }, a.pipeline.my_feedback ? 'Update my scorecard' : 'Submit my scorecard');
+      const buttons = SCORE_LABELS.map((label, i) => h('button', {
+        type: 'button', 'aria-pressed': String(chosen === i + 1),
+        onclick: () => { chosen = i + 1; buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(j === i))); save.disabled = false; },
+      }, h('b', null, i + 1), label));
+      save.addEventListener('click', action(save, box, async () => {
+        await api('POST', `${base}/feedback`, { score: chosen, note: note.value });
+        toast('Scorecard saved');
+        render();
+      }));
+      return h('div', { class: 'stack' },
+        h('h3', null, `Your scorecard for ${current.name}`),
+        h('p', { class: 'hint' }, 'Other scorecards stay hidden until you submit yours.'),
+        h('div', { class: 'scale', role: 'group', 'aria-label': 'Score from 1 to 5' }, buttons),
+        h('label', { class: 'field', for: 'stage-note' }, 'Note (optional)', note),
+        h('div', { class: 'row' }, save));
+    };
+    pipelineSection = h('section', { class: 'stack panel' },
+      current && h('div', { class: 'row between' }, h('h2', null, `At ${current.name}`), current.blind && pill('', 'Anonymous')),
+      moveArea,
+      a.pipeline.stages.filter((x) => x.work || x.feedback.length).map((x) => h('div', { class: 'stack stage-log' },
+        h('h3', null, x.name),
+        x.work && h('p', { class: 'pre' }, redacted(x.work.text)),
+        x.feedback.length > 0 && h('div', { class: 'score-list' }, x.feedback.map((f) => h('div', null,
+          h('span', { class: 'num' }, `${f.score}/5`), ' ', h('span', { class: 'muted' }, f.reviewer), f.note && h('span', { class: 'muted' }, ` · ${f.note}`)))))),
+      scoreForm());
+  }
+
+  return shell([
+    h('div', null, h('button', { class: 'quiet', onclick: () => go(`/roles/${id}`) }, a.role.title)),
+    h('div', { class: 'row between' },
+      h('div', { class: 'row' }, h('h1', { class: 'code' }, a.code),
+        a.status !== 'submitted' && pill(a.status, a.pipeline?.stages.find((x) => x.id === a.pipeline.current_id)?.name ?? STATUS_LABELS[a.status]),
+        a.discuss && pill('discuss', 'Split')),
+      a.score != null && h('div', { class: 'bigscore num' }, a.score.toFixed(2))),
+    reasons.length > 0 && h('section', { class: 'stack panel' },
+      h('div', { class: 'eyebrow' }, a.scan.state === 'set_aside' ? 'Set aside because' : a.scan.state === 'sampled' ? 'Spot-check. Scan flagged' : 'Scan flagged'),
+      reasons.map((r) => h('p', null, r)),
+      a.can_restore && h('div', { class: 'row' },
+        post('Send to reviewers', 'primary', 'restore', {}),
+        a.can_decline_aside && post('Decline', '', 'decision', { decision: 'declined' }))),
+    a.is_admin && a.assigned?.length > 0 && h('p', { class: 'muted small' }, `Assigned to ${a.assigned.join(', ')}`),
+    a.is_admin && a.can_decide && h('section', { class: 'stack' },
+      h('div', { class: 'row' }, post('Advance', 'primary', 'decision', { decision: 'advanced' }), post('Decline', '', 'decision', { decision: 'declined' })),
+      h('p', { class: 'muted small' }, `The email goes out in ${a.grace_minutes} minutes. Advancing unlocks contact details, and opening them makes the decision final.`)),
+    a.is_admin && !a.can_decide && a.status === 'submitted' && a.scan?.state !== 'set_aside' && h('p', { class: 'muted' }, a.role.status !== 'closed'
+      ? 'You can decide once applications close.' : 'You can decide once every reviewer has finished.'),
+    a.can_open_identity && identity,
+    pipelineSection,
+    a.is_admin && a.status === 'declined' && h('p', { class: 'muted' }, a.contact_deleted ? 'Contact details were never opened and have been deleted.' : 'Contact details stay sealed and will be deleted automatically.'),
+    a.is_admin && a.can_undo && h('div', { class: 'row' }, undo),
+    box,
+    h('div', { class: 'stack lg' }, a.answers.map((ans) => h('section', { class: 'stack qa' },
+      h('div', { class: 'row between' }, h('h3', { class: 'grow' }, ans.prompt),
+        ans.average != null && h('span', { class: 'scorecell num' }, ans.average.toFixed(1))),
+      h('p', { class: 'pre' }, redacted(ans.text)),
+      ans.scores.length > 0 && h('div', { class: 'score-list' }, ans.scores.map((s) => h('div', null,
+        h('span', { class: 'num' }, `${s.score}/5`), ' ', h('span', { class: 'muted' }, s.reviewer), s.note && h('span', { class: 'muted' }, ` · ${s.note}`))))))),
+  ], { narrow: true });
+}
+
+// ---- Pipeline ----
+async function viewPipeline(id) {
+  const p = await api('GET', `/api/roles/${id}/pipeline`);
+  const top = Math.max(...p.funnel.map((f) => f.count), 1);
+  const moveCard = async (code, stageId) => {
+    try {
+      const res = await api('POST', `/api/roles/${id}/applications/${encodeURIComponent(code)}/move`, { stage_id: stageId });
+      toast(res.emailed ? 'Moved. The email goes out shortly.' : 'Moved back. No email is sent.');
+    } catch (err) { toast(err.message); }
+    render();
+  };
+  const card = (c, stage) => h('article', {
+    class: `card${c.stalled ? ' stalled' : ''}`, draggable: p.is_admin ? 'true' : null,
+    ondragstart: (e) => { e.dataTransfer.setData('text/plain', c.code); e.currentTarget.classList.add('lifted'); },
+    ondragend: (e) => e.currentTarget.classList.remove('lifted'),
+  },
+  h('button', { class: 'card-open', onclick: () => go(`/roles/${id}/a/${c.code}`) },
+    h('strong', { class: c.name ? null : 'code' }, c.name ?? c.code),
+    c.name && h('span', { class: 'code hint' }, c.code)),
+  h('div', { class: 'row card-meta' },
+    c.score != null && h('span', { class: 'num' }, `${c.score.toFixed(1)}/5`),
+    c.work_in && pill('', 'Response in'),
+    c.cards_in > 0 && pill('', `${c.cards_in} ${c.cards_in === 1 ? 'scorecard' : 'scorecards'}`),
+    stage.type !== 'hired' && (c.stalled ? pill('discuss', `Waiting ${c.days}d`) : c.days > 0 && h('span', { class: 'hint' }, `${c.days}d`))),
+  p.is_admin && h('select', {
+    class: 'inline card-move', id: `card-move-${c.code}`, 'aria-label': `Move ${c.name ?? c.code}`,
+    onchange: (e) => moveCard(c.code, e.target.value),
+  }, p.stages.map((x) => h('option', { value: x.id, selected: x.id === stage.id }, x.id === stage.id ? 'Move to…' : x.name))));
+
+  return shell([
+    h('div', { class: 'row between' },
+      h('div', { class: 'stack' }, h('h1', null, p.role.title), h('p', { class: 'muted' }, 'Everyone who has been advanced.')),
+      h('button', { class: 'btn', onclick: () => go(`/roles/${id}`) }, 'Ranking')),
+    h('section', { class: 'funnel', 'aria-label': 'Numbers at each stage' }, p.funnel.map((f) => h('div', { class: 'funnel-step' },
+      h('div', { class: 'funnel-bar' }, h('i', { style: `height:${Math.max((f.count / top) * 100, f.count ? 4 : 0)}%` })),
+      h('div', { class: 'funnel-num num' }, f.count),
+      h('div', { class: 'hint' }, f.label),
+      f.days >= 0.5 && f.count > 0 && h('div', { class: 'hint num' }, `${f.days}d avg`)))),
+    h('div', { class: 'kanban' }, p.stages.map((stage) => h('section', {
+      class: 'column',
+      ondragover: p.is_admin ? (e) => { e.preventDefault(); e.currentTarget.classList.add('over'); } : null,
+      ondragleave: (e) => e.currentTarget.classList.remove('over'),
+      ondrop: p.is_admin ? (e) => { e.preventDefault(); e.currentTarget.classList.remove('over'); moveCard(e.dataTransfer.getData('text/plain'), stage.id); } : null,
+    },
+    h('header', { class: 'column-head' }, h('h3', null, stage.name), stage.blind && h('span', { class: 'hint' }, 'Anonymous'), h('span', { class: 'hint num' }, stage.cards.length)),
+    stage.cards.map((c) => card(c, stage)),
+    !stage.cards.length && h('p', { class: 'hint empty' }, 'Nobody here')))),
+  ]);
+}
+
+// ---- Emails ----
+async function viewEmails() {
+  const s = await api('GET', '/api/settings');
+  const items = [
+    { kind: 'confirm', name: 'Application received', when: 'As soon as someone applies', cta: 'View your application' },
+    { kind: 'advance', name: 'Moving forward', when: `${s.grace_minutes} minutes after you advance someone` },
+    { kind: 'decline', name: 'Not moving forward', when: `${s.grace_minutes} minutes after you decline someone` },
+    { kind: 'stage', name: 'Next step in the pipeline', when: 'Each time someone moves to a stage', readonly: true },
+  ];
+  s.templates.stage = 'Hi {{first_name}},\n\nWe would like to meet you for First interview on {{role}}. Your name has now been opened to the team.\n\nA 30 minute conversation with the hiring lead.\n\n{{booking_link}}\n\n{{status_link}}';
+  s.subjects.stage = 'Next step: First interview for {{role}}';
+  const HEADINGS = { confirm: 'Application received', advance: 'You are moving forward', decline: 'Thank you for applying', stage: 'Next step: First interview' };
+  let current = items[0];
+  let width = 'phone';
+  const sample = {
+    first_name: 'Jordan', role: 'Investment Analyst', org: s.org_name, code: 'K7M-2QX',
+    retention_days: String(s.retention_days), status_link: '{{status_link}}', booking_link: '{{booking_link}}',
+  };
+  const fillIn = (text) => text.replace(/\{\{(\w+)\}\}/g, (m, k) => sample[k] ?? m);
+
+  const list = h('div', { class: 'mail-list' });
+  const editor = h('div', { class: 'stack' });
+  const stage = h('div', { class: 'stage' });
+
+  // The email layout: one column, large text and a full-width button, so it reads well at any phone width.
+  function drawPreview() {
+    const blocks = fillIn(s.templates[current.kind]).split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+    const body = blocks.flatMap((block) => {
+      const lines = block.split('\n');
+      const isLink = (l) => l === '{{status_link}}' || l === '{{booking_link}}';
+      const text = lines.filter((l) => !isLink(l)).join('\n');
+      return [
+        text && h('p', { class: 'mail-p' }, text),
+        lines.filter(isLink).map((l) => h('div', { class: 'mail-cta' }, l === '{{booking_link}}' ? 'Book a time' : current.cta ?? 'View your application')),
+      ];
+    });
+    const b = s.brand;
+    const accent = b.accent ?? '#0b0b0c';
+    stage.replaceChildren(
+      h('div', { class: 'row seg', role: 'group', 'aria-label': 'Preview size' },
+        ['phone', 'desktop'].map((w) => h('button', {
+          type: 'button', class: width === w ? 'on' : null, 'aria-pressed': String(width === w),
+          onclick: () => { width = w; drawPreview(); },
+        }, w === 'phone' ? 'iPhone' : 'Desktop'))),
+      h('div', { class: `device ${width}` },
+        h('div', { class: 'device-meta' },
+          h('div', { class: 'device-from' }, s.org_name),
+          h('div', { class: 'device-subject' }, fillIn(s.subjects[current.kind]))),
+        h('div', { class: 'mail' },
+          h('div', { class: `mail-head${b.header === 'dark' ? ' dark' : ''}` },
+            b.logo ? h('img', { class: 'mail-logo', src: b.logo, alt: s.org_name }) : s.org_name),
+          h('div', { class: `mail-hero${b.header === 'dark' ? ' dark' : ''}` },
+            h('i', { style: `background:${accent}` }),
+            h('h2', null, HEADINGS[current.kind])),
+          ['confirm', 'stage'].includes(current.kind) && h('div', { class: 'mail-steps' },
+            h('div', { class: 'mail-bars' }, [0, 1, 2, 3, 4, 5, 6, 7].map((n) => h('i', { style: n <= (current.kind === 'stage' ? 3 : 0) ? `background:${accent}` : null }))),
+            h('p', null, current.kind === 'stage' ? 'Step 4 of 8: First interview' : 'Step 1 of 8: Applied')),
+          h('div', { class: 'mail-body' }, body),
+          h('div', { class: 'mail-foot' }, `Reference ${sample.code}. Sent by ${s.org_name}.`)))
+    );
+  }
+
+  function drawList() {
+    list.replaceChildren(...items.map((i) => h('div', { class: `mail-row${i === current ? ' on' : ''}` },
+      h('button', { type: 'button', class: 'mail-pick', onclick: () => { current = i; drawList(); drawEditor(); drawPreview(); } },
+        h('span', { class: 'mail-name' }, i.name), h('span', { class: 'hint' }, i.when)),
+      !i.readonly && h('label', { class: 'switch', for: `auto-${i.kind}` },
+        h('input', {
+          id: `auto-${i.kind}`, type: 'checkbox', checked: s.auto[i.kind], 'aria-label': `Send ${i.name} automatically`,
+          onchange: async (e) => {
+            s.auto[i.kind] = e.target.checked;
+            try {
+              await api('PUT', '/api/settings', { ...s, templates: { confirm: s.templates.confirm, advance: s.templates.advance, decline: s.templates.decline } });
+              toast(e.target.checked ? `${i.name} will send automatically` : `${i.name} is off. People will only see the outcome on their status page.`);
+            } catch (err) { toast(err.message); }
+          },
+        }),
+        h('i')))));
+  }
+
+  const box = errorBox();
+  function drawEditor() {
+    if (current.readonly) {
+      editor.replaceChildren(h('p', { class: 'muted' }, 'Each job sets these on its Edit page, under Recruitment stages. This is how an interview invitation looks.'));
+      return;
+    }
+    const save = h('button', { class: 'btn primary', type: 'button' }, 'Save email');
+    save.addEventListener('click', action(save, box, async () => {
+      await api('PUT', '/api/settings', { ...s, templates: { confirm: s.templates.confirm, advance: s.templates.advance, decline: s.templates.decline } });
+      toast('Email saved');
+    }));
+    editor.replaceChildren(
+      h('label', { class: 'field', for: 'mail-subject' }, 'Subject',
+        h('span', { class: 'hint' }, 'Fields: {{role}}, {{org}}, {{code}}'),
+        h('input', { id: 'mail-subject', type: 'text', value: s.subjects[current.kind], oninput: (e) => { s.subjects[current.kind] = e.target.value; drawPreview(); } })),
+      h('label', { class: 'field', for: 'mail-body' }, 'Message',
+        h('span', { class: 'hint' }, 'Fields: {{first_name}}, {{role}}, {{org}}, {{code}}, {{retention_days}}, {{status_link}}'),
+        h('textarea', { id: 'mail-body', style: 'min-height:220px', value: s.templates[current.kind], oninput: (e) => { s.templates[current.kind] = e.target.value; drawPreview(); } })),
+      box, h('div', { class: 'row' }, save),
+    );
+  }
+  drawList(); drawEditor(); drawPreview();
+
+  return shell([
+    h('h1', null, 'Emails'),
+    !DEMO && !s.mail_configured && h('p', { class: 'muted' }, 'Email sending is not connected yet, so messages wait in the queue under Activity.'),
+    list,
+    h('div', { class: 'mail-grid' }, editor, stage),
+  ]);
+}
+
+// ---- Team ----
+const ACCESS_LABELS = { master: 'Master', lead: 'Hiring lead', reviewer: 'Reviewer' };
+const accessOf = (u) => (u.master ? 'master' : u.role === 'admin' ? 'lead' : 'reviewer');
+
+async function viewTeam() {
+  const { users, areas } = await api('GET', '/api/users');
+  const box = errorBox();
+  const name = h('input', { id: 'inv-name', type: 'text' });
+  const email = h('input', { id: 'inv-email', type: 'email' });
+  const role = h('select', { id: 'inv-role' }, Object.entries({ reviewer: 'Reviewer', admin: 'Hiring lead', master: 'Master' }).map(([v, l]) => h('option', { value: v }, l)));
+  let invAreas = [];
+  const result = h('div', { class: 'stack' });
+  const showLink = (who, url) => {
+    result.replaceChildren(h('div', { class: 'notice stack' },
+      h('strong', null, `Send this link to ${who}`),
+      h('span', { class: 'code wrap' }, url),
+      h('span', { class: 'small' }, 'It lets them set a password and works once.')));
+  };
+  const submit = h('button', { class: 'btn primary', type: 'submit' }, 'Create invite');
+  const update = async (u, change, done) => {
+    try {
+      await api('POST', `/api/users/${u.id}/access`, change);
+      if (done) toast(done);
+      render();
+    } catch (err) { toast(err.message); render(); }
+  };
+  const areaChips = (selected, onChange, prefix) => h('div', { class: 'chips' }, areas.map((a) => h('label', { class: `chip${selected.includes(a) ? ' on' : ''}`, for: `${prefix}-${a}` },
+    h('input', {
+      id: `${prefix}-${a}`, type: 'checkbox', checked: selected.includes(a),
+      onchange: (e) => {
+        e.target.parentElement.classList.toggle('on', e.target.checked);
+        onChange(e.target.checked ? [...selected, a] : selected.filter((x) => x !== a));
+      },
+    }), a)));
+
+  return shell([
+    h('div', { class: 'stack' }, h('h1', null, 'Team')),
+    h('dl', { class: 'levels' },
+      h('div', null, h('dt', null, 'Master'), h('dd', null, 'Everything, including team, brand, emails and the activity log.')),
+      h('div', null, h('dt', null, 'Hiring lead'), h('dd', null, 'Runs the jobs they lead, makes decisions, and opens contact details of people they advance.')),
+      h('div', null, h('dt', null, 'Reviewer'), h('dd', null, 'Scores only the responses assigned to them.'))),
+    h('section', null, h('div', { class: 'table-wrap' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', null, 'Name'), h('th', null, 'Access'), h('th', null, 'Job areas'), h('th', null, 'Status'), h('th', null, ''))),
+      h('tbody', null, users.map((u) => h('tr', null,
+        h('td', null, u.name, h('div', { class: 'hint' }, u.email)),
+        h('td', null, h('select', {
+          id: `access-${u.id}`, 'aria-label': `Access for ${u.name}`, class: 'inline',
+          onchange: (e) => update(u, { access: e.target.value }, `${u.name} is now ${ACCESS_LABELS[e.target.value]}`),
+        }, Object.entries(ACCESS_LABELS).map(([v, l]) => h('option', { value: v, selected: accessOf(u) === v }, l)))),
+        h('td', null, accessOf(u) === 'master' ? h('span', { class: 'hint' }, 'All jobs') : areaChips(u.areas, (next) => update(u, { areas: next }), `area-${u.id}`)),
+        h('td', null, u.joined ? pill('', 'Active') : pill('queued', 'Invited')),
+        h('td', null, u.id !== state.user.id && h('div', { class: 'row' },
+          h('button', { class: 'quiet', onclick: async () => {
+            try { const r = await api('POST', `/api/users/${u.id}/reset`, {}); showLink(u.name, r.invite_url); } catch (err) { toast(err.message); }
+          } }, 'Reset password'),
+          h('button', { class: 'quiet', onclick: async () => {
+            try { await api('POST', `/api/users/${u.id}/remove`, {}); toast(`${u.name} removed. Their unscored responses were reassigned.`); render(); } catch (err) { toast(err.message); }
+          } }, 'Remove')))))))),
+    ),
+    h('form', {
+      class: 'stack',
+      onsubmit: action(submit, box, async () => {
+        const res = await api('POST', '/api/users', { name: name.value, email: email.value, role: role.value, areas: invAreas });
+        showLink(name.value, res.invite_url);
+        name.value = ''; email.value = '';
+      }),
+    },
+    h('h2', null, 'Invite someone'),
+    h('div', { class: 'two' },
+      h('label', { class: 'field', for: 'inv-name' }, 'Name', name),
+      h('label', { class: 'field', for: 'inv-email' }, 'Email', email)),
+    h('label', { class: 'field', for: 'inv-role' }, 'Access', role),
+    h('div', { class: 'field' }, h('span', null, 'Job areas'),
+      h('span', { class: 'hint' }, 'They join running jobs in these areas straight away.'),
+      (() => {
+        const holder = h('div', null);
+        const draw = () => holder.replaceChildren(areaChips(invAreas, (next) => { invAreas = next; draw(); }, 'inv-area'));
+        draw();
+        return holder;
+      })()),
+    box, h('div', { class: 'row' }, submit), result),
+  ]);
+}
+
+// ---- Activity ----
+async function viewActivity() {
+  const a = await api('GET', '/api/activity');
+  const actionLabels = {
+    application_received: 'Application received', application_withdrawn: 'Applicant withdrew', advanced: 'Advanced', declined: 'Declined',
+    decision_undone: 'Decision undone', stage_moved: 'Moved stage', stage_work_received: 'Response received', identity_opened: 'Opened contact details', contact_deleted: 'Contact details deleted',
+    scan_through: 'Scan: to read', scan_set_aside: 'Scan: set aside', scan_sampled: 'Scan: spot-check', scan_failed: 'Scan failed', scan_overruled: 'Sent to reviewers', scan_rerun: 'Scan run again', access_changed: 'Access changed',
+    role_created: 'Role created', role_updated: 'Role updated', role_opened: 'Role opened', role_closed: 'Role closed',
+    team_invited: 'Invited to team', team_removed: 'Removed from team', password_reset: 'Password reset issued', settings_updated: 'Settings updated',
+  };
+  const emailStatus = { queued: 'Waiting', sent: 'Sent', cancelled: 'Cancelled' };
+  return shell([
+    h('h1', null, 'Activity'),
+    !a.mail_configured && !DEMO && h('div', { class: 'warn' }, 'Email is not connected yet, so messages are waiting here and will send once it is. Applicants can still see their outcome on their status page.'),
+    h('section', { class: 'stack' }, h('h2', null, 'Log'), h('div', { class: 'table-wrap' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', null, 'When'), h('th', null, 'Who'), h('th', null, 'What'), h('th', null, 'Reference'), h('th', null, 'Detail'))),
+      h('tbody', null, a.audit.map((e) => h('tr', null,
+        h('td', { class: 'num', style: 'white-space:nowrap' }, fmtDateTime(e.at)),
+        h('td', null, e.actor === 'system' ? 'Automatic' : e.actor === 'applicant' ? 'Applicant' : e.actor),
+        h('td', null, actionLabels[e.action] ?? e.action),
+        h('td', { class: 'code' }, e.code ?? ''),
+        h('td', { class: 'muted' }, e.detail))))))),
+    h('section', { class: 'stack' }, h('h2', null, 'Emails'), a.emails.length ? h('div', { class: 'table-wrap' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', null, 'Subject'), h('th', null, 'Reference'), h('th', null, 'Status'), h('th', null, 'Time'))),
+      h('tbody', null, a.emails.map((m) => h('tr', null,
+        h('td', null, m.subject), h('td', { class: 'code' }, m.code ?? ''),
+        h('td', null, pill(m.status, emailStatus[m.status] ?? m.status), m.error && h('div', { class: 'small muted' }, m.error)),
+        h('td', { class: 'num', style: 'white-space:nowrap' }, fmtDateTime(m.sent_at ?? m.send_after)))))))
+      : h('p', { class: 'muted' }, 'No emails yet.')),
+  ]);
+}
+
+// ---- Settings ----
+async function viewSettings() {
+  const s = await api('GET', '/api/settings');
+  const box = errorBox();
+  const save = h('button', { class: 'btn primary', type: 'submit' }, 'Save settings');
+  const logoPreview = h('div', { class: 'logo-preview' });
+  const drawLogo = () => {
+    logoPreview.className = `logo-preview${s.brand.header === 'dark' ? ' dark' : ''}`;
+    logoPreview.replaceChildren(s.brand.logo ? h('img', { class: 'logo', src: s.brand.logo, alt: 'Current logo' }) : s.org_name);
+  };
+  drawLogo();
+  return shell([
+    h('h1', null, 'Settings'),
+    h('form', {
+      class: 'stack lg',
+      onsubmit: action(save, box, async () => {
+        await api('PUT', '/api/settings', s);
+        applyBrand({ ...s.brand, name: s.org_name });
+        toast('Settings saved');
+        render();
+      }),
+    },
+    h('section', { class: 'stack' },
+      h('h2', null, 'Brand'),
+      logoPreview,
+      h('label', { class: 'field', for: 's-org' }, 'Organisation name', h('input', { id: 's-org', type: 'text', value: s.org_name, oninput: (e) => { s.org_name = e.target.value; drawLogo(); } })),
+      h('label', { class: 'field', for: 's-tagline' }, 'Careers tagline',
+        h('span', { class: 'hint' }, 'Shown at the top of your open roles page.'),
+        h('input', { id: 's-tagline', type: 'text', maxlength: '160', value: s.brand.tagline ?? '', oninput: (e) => { s.brand.tagline = e.target.value; } })),
+      h('div', { class: 'two' },
+        h('label', { class: 'field', for: 's-logo' }, 'Logo',
+          h('input', {
+            id: 's-logo', type: 'file', accept: 'image/svg+xml,image/png,image/jpeg,image/webp',
+            onchange: (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              if (file.size > 300_000) { toast('Use a logo under 300 KB.'); return; }
+              const reader = new FileReader();
+              reader.onload = () => { s.brand.logo = String(reader.result); drawLogo(); };
+              reader.readAsDataURL(file);
+            },
+          })),
+        h('label', { class: 'field', for: 's-header' }, 'Header',
+          h('select', { id: 's-header', onchange: (e) => { s.brand.header = e.target.value; drawLogo(); } },
+            h('option', { value: 'light', selected: s.brand.header !== 'dark' }, 'Light'),
+            h('option', { value: 'dark', selected: s.brand.header === 'dark' }, 'Dark')))),
+      s.brand.logo && h('div', null, h('button', { type: 'button', class: 'quiet', onclick: () => { s.brand.logo = null; drawLogo(); } }, 'Remove logo')),
+      h('div', { class: 'two' },
+        h('label', { class: 'field', for: 's-accent' }, 'Accent colour',
+          h('input', { id: 's-accent', type: 'color', value: s.brand.accent ?? '#0b0b0c', oninput: (e) => { s.brand.accent = e.target.value; } })),
+        h('label', { class: 'field', for: 's-font' }, 'Font',
+          h('select', { id: 's-font', onchange: (e) => { s.brand.font = e.target.value; } },
+            s.fonts.map((f) => h('option', { value: f, selected: s.brand.font === f }, f))))),
+      h('label', { class: 'field', for: 's-icon' }, 'Browser tab icon',
+        h('input', {
+          id: 's-icon', type: 'file', accept: 'image/svg+xml,image/png,image/jpeg,image/webp',
+          onchange: (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 100_000) { toast('Use an icon under 100 KB.'); return; }
+            const reader = new FileReader();
+            reader.onload = () => { s.brand.icon = String(reader.result); };
+            reader.readAsDataURL(file);
+          },
+        }))),
+    h('section', { class: 'stack' },
+      h('h2', null, 'Job areas'),
+      h('label', { class: 'field', for: 's-areas' }, 'One per line',
+        h('span', { class: 'hint' }, 'Used to bring the right people onto each job automatically.'),
+        h('textarea', { id: 's-areas', style: 'min-height:110px', value: s.areas.join('\n'), oninput: (e) => { s.areas = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } }))),
+    h('section', { class: 'stack' },
+      h('h2', null, 'Privacy'),
+      s.ai_available === false && h('p', { class: 'muted small' }, 'The AI scan is not connected. Roles use rule checks only.'),
+      h('label', { class: 'field', for: 's-privacy' }, 'Privacy notice',
+        h('span', { class: 'hint' }, 'Shown on the application form. This is a starting draft, so have it legally reviewed.'),
+        h('textarea', { id: 's-privacy', style: 'min-height:220px', value: s.privacy_notice, oninput: (e) => { s.privacy_notice = e.target.value; } })),
+      h('label', { class: 'field', for: 's-retain' }, 'Delete declined applicants’ contact details after (days)',
+        h('input', { id: 's-retain', type: 'number', min: '1', max: '730', value: s.retention_days, oninput: (e) => { s.retention_days = Number(e.target.value); } }))),
+    box, h('div', { class: 'row' }, save)),
+  ], { narrow: true });
+}
+
+// ---- Account ----
+async function viewAccount() {
+  const me = (await api('GET', '/api/me')).user;
+  const pwBox = errorBox();
+  const current = h('input', { id: 'pw-current', type: 'password', autocomplete: 'current-password' });
+  const next = h('input', { id: 'pw-next', type: 'password', autocomplete: 'new-password' });
+  const pwSave = h('button', { class: 'btn', type: 'submit' }, 'Change password');
+
+  const twoBox = errorBox();
+  const twoArea = h('div', { class: 'stack' });
+  const showOff = () => {
+    const start = h('button', { class: 'btn', type: 'button' }, 'Turn on');
+    start.addEventListener('click', action(start, twoBox, async () => {
+      const setup = await api('POST', '/api/2fa/start', {});
+      const code = h('input', { id: 'two-code', type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code' });
+      const confirm = h('button', { class: 'btn primary', type: 'button' }, 'Confirm');
+      confirm.addEventListener('click', action(confirm, twoBox, async () => {
+        const done = await api('POST', '/api/2fa/confirm', { code: code.value });
+        twoArea.replaceChildren(
+          h('p', null, 'Two-step sign-in is on. Save these recovery codes somewhere safe. Each works once, and you will not see them again.'),
+          h('div', { class: 'panel code wrap recovery' }, done.recovery_codes.join('  ')));
+      }));
+      twoArea.replaceChildren(
+        h('p', { class: 'muted' }, 'Scan this with an authenticator app, then enter the code it shows.'),
+        h('img', { class: 'qr', src: setup.qr, alt: 'QR code for your authenticator app' }),
+        h('p', { class: 'small muted' }, 'Or enter this key: ', h('span', { class: 'code wrap' }, setup.key)),
+        h('label', { class: 'field', for: 'two-code' }, 'Code', code),
+        h('div', { class: 'row' }, confirm));
+    }));
+    twoArea.replaceChildren(h('p', { class: 'muted' }, 'Off. Recommended for anyone who can open contact details.'), h('div', { class: 'row' }, start));
+  };
+  const showOn = () => {
+    const pw = h('input', { id: 'two-off-pw', type: 'password', autocomplete: 'current-password' });
+    const off = h('button', { class: 'btn', type: 'button' }, 'Turn off');
+    off.addEventListener('click', action(off, twoBox, async () => {
+      await api('POST', '/api/2fa/disable', { password: pw.value });
+      showOff();
+    }));
+    twoArea.replaceChildren(h('p', null, 'On.'), h('label', { class: 'field', for: 'two-off-pw' }, 'Password, to turn it off', pw), h('div', { class: 'row' }, off));
+  };
+  if (me.two_factor) showOn(); else showOff();
+
+  return shell([
+    h('h1', null, 'Account'),
+    h('section', { class: 'stack' }, h('h2', null, 'Two-step sign-in'), twoArea, twoBox),
+    h('form', {
+      class: 'stack',
+      onsubmit: action(pwSave, pwBox, async () => {
+        await api('POST', '/api/password', { current: current.value, password: next.value });
+        current.value = ''; next.value = '';
+        toast('Password changed');
+      }),
+    },
+    h('h2', null, 'Password'),
+    h('label', { class: 'field', for: 'pw-current' }, 'Current password', current),
+    h('label', { class: 'field', for: 'pw-next' }, 'New password', h('span', { class: 'hint' }, 'At least 10 characters.'), next),
+    pwBox, h('div', { class: 'row' }, pwSave)),
+  ], { narrow: true });
+}
+
+// ---- Privacy ----
+async function viewPrivacy() {
+  const p = await api('GET', '/api/public/privacy');
+  return shell([h('h1', null, 'Privacy notice'), h('p', { class: 'pre' }, p.text)], { narrow: true });
+}
+
+// ---- Router ----
+const ROUTES = [
+  [/^\/$/, () => (state.user ? viewDashboard() : viewHome())],
+  [/^\/apply\/([^/]+)$/, viewApply],
+  [/^\/status\/([^/]+)$/, viewStatus],
+  [/^\/login$/, viewLogin],
+  [/^\/invite\/([^/]+)$/, viewInvite],
+  [/^\/dashboard$/, viewDashboard, 'user'],
+  [/^\/team$/, viewTeam, 'master'],
+  [/^\/emails$/, viewEmails, 'master'],
+  [/^\/activity$/, viewActivity, 'master'],
+  [/^\/settings$/, viewSettings, 'master'],
+  [/^\/account$/, viewAccount, 'user'],
+  [/^\/privacy$/, viewPrivacy],
+  [/^\/roles\/new$/, () => viewRoleEdit(null), 'admin'],
+  [/^\/roles\/([^/]+)\/edit$/, viewRoleEdit, 'admin'],
+  [/^\/roles\/([^/]+)\/review$/, viewReview, 'user'],
+  [/^\/roles\/([^/]+)\/a\/([^/]+)$/, viewApplication, 'user'],
+  [/^\/roles\/([^/]+)\/pipeline$/, viewPipeline, 'user'],
+  [/^\/roles\/([^/]+)$/, viewBoard, 'user'],
+];
+
+let renderId = 0;
+async function render() {
+  const id = ++renderId;
+  const routePath = state.path;
+  if (keyHandler) {
+    document.removeEventListener('keydown', keyHandler);
+    keyHandler = null;
+  }
+  const match = ROUTES.map(([re, fn, access]) => ({ m: re.exec(routePath), fn, access })).find((x) => x.m);
+  try {
+    if (DEMO) state.user = DEMO.currentUser();
+    if (!match) throw Object.assign(new Error('We could not find that page.'), { status: 404 });
+    if (match.access && !state.user) { go('/login', { replace: true }); return; }
+    if (match.access === 'admin' && state.user.role !== 'admin') { go('/dashboard', { replace: true }); return; }
+    if (match.access === 'master' && !state.user.master) { go('/dashboard', { replace: true }); return; }
+    const nodes = await match.fn(...match.m.slice(1));
+    if (id === renderId) paint(nodes);
+  } catch (err) {
+    if (err.status === 401 && !DEMO) { state.user = null; go('/login', { replace: true }); return; }
+    if (id === renderId) {
+      paint(shell([h('h1', null, 'That did not work'), h('div', null, h('p', null, err.message))], { narrow: true }));
+    }
+  }
+}
+
+(async () => {
+  if (!DEMO) {
+    try {
+      const me = await api('GET', '/api/me');
+      state.user = me.user;
+      state.org = me.org;
+      applyBrand(me.brand);
+    } catch { /* The page shows its own error if the server is unreachable. */ }
+  } else {
+    applyBrand(DEMO.brand());
+  }
+  render();
+})();
+
+</script>
+</body>
+</html>
