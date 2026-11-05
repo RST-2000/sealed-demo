@@ -15,18 +15,18 @@
   --muted: #6c6c72;
   --rule: #e6e6e9;
   --tint: #f5f5f6;
-  --accent: #ff6b4a;
-  --on-accent: #16120c;
-  --secondary: #ffc94d;
+  --accent: #3457f5;
+  --on-accent: #ffffff;
+  --secondary: #9cc9ff;
   --on-secondary: #16120c;
-  --hero-bg: #0f3d3e;
+  --hero-bg: #101a3f;
   --on-hero-bg: #ffffff;
   --wash: color-mix(in srgb, var(--accent) 9%, var(--paper));
   --wash-2: color-mix(in srgb, var(--secondary) 18%, var(--paper));
   --hero-soft: color-mix(in srgb, var(--hero-bg) 10%, var(--paper));
   --bar: #0b0b0c;
   --bar-ink: #9a9aa2;
-  --good: #0f6b4c;
+  --good: #2444c9;
   --warn: #8a5300;
   --warn-soft: #fbf3e2;
   --bad: #a3263a;
@@ -38,13 +38,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #0c0c0d; --ink: #f3f3f4; --muted: #9c9ca3; --rule: #27272b; --tint: #18181b; --bar: #000000; --bar-ink: #7d7d85;
-    --good: #5cc9a0; --warn: #e8b868; --warn-soft: #2c2212; --bad: #f08a99; --bad-soft: #351820;
+    --good: #a3b8ff; --warn: #e8b868; --warn-soft: #2c2212; --bad: #f08a99; --bad-soft: #351820;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #0c0c0d; --ink: #f3f3f4; --muted: #9c9ca3; --rule: #27272b; --tint: #18181b; --bar: #000000; --bar-ink: #7d7d85;
-  --good: #5cc9a0; --warn: #e8b868; --warn-soft: #2c2212; --bad: #f08a99; --bad-soft: #351820;
+  --good: #a3b8ff; --warn: #e8b868; --warn-soft: #2c2212; --bad: #f08a99; --bad-soft: #351820;
   color-scheme: dark;
 }
 
@@ -254,7 +254,7 @@ select.inline { width: auto; padding: 6px 10px; font-size: 0.92rem; }
 .funnel-step { flex: 1 0 84px; min-width: 84px; display: grid; gap: 1px; align-content: start; }
 .funnel-bar { height: 76px; display: flex; align-items: flex-end; margin-bottom: 6px; border-bottom: 1px solid var(--rule); }
 .funnel-bar i { display: block; width: 100%; border-radius: 6px 6px 0 0; background: var(--accent); }
-.funnel-step:nth-child(-n+2) .funnel-bar i { background: var(--hero-bg); }
+.funnel-step:nth-child(-n+2) .funnel-bar i { background: var(--secondary); }
 .funnel-num { font-size: 1.5rem; line-height: 1.1; letter-spacing: -0.02em; }
 .kanban { display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; padding-bottom: 12px; scroll-snap-type: x proximity; }
 .column { flex: 0 0 min(268px, 80vw); background: var(--wash); border-radius: 12px; padding: 12px; display: grid; gap: 8px; scroll-snap-align: start; min-height: 150px; align-content: start; }
@@ -320,6 +320,7 @@ details summary { cursor: pointer; list-style-position: inside; }
 <body>
 <div id="app"></div>
 <script>
+
 // Removes details that identify an applicant from their answers.
 // Runs before anything is stored, so the original text never reaches reviewers.
 
@@ -451,7 +452,7 @@ const demoStages = [
   { name: 'Hired', type: 'hired' },
 ];
 const demoData = {
-  org: 'Tallowood Ventures',
+  org: 'Harbourline Ventures',
   team: [
     { key: 'alex', name: 'Alex Morgan', email: 'alex@example.com', role: 'admin', master: true, areas: [] },
     { key: 'jess', name: 'Jess Park', email: 'jess@example.com', role: 'admin', areas: ['Investment', 'Platform'] },
@@ -548,8 +549,8 @@ window.__sealedDemo = (() => {
     seq = 0;
     const now = Date.now();
     db = {
-      org: demoData.org, retention: 180, applied: false, audit: [], emails: [],
-      brand: { accent: '#ff6b4a', secondary: '#ffc94d', hero: '#0f3d3e', header: 'dark', logo: null, font: 'Geist', icon: null, tagline: 'Back the founders shaping what comes next. We read your thinking first, and your name last.' },
+      org: window.__sealedBrand?.name ?? demoData.org, retention: 180, applied: false, audit: [], emails: [],
+      brand: { accent: '#3457f5', secondary: '#9cc9ff', hero: '#101a3f', header: 'dark', logo: null, font: 'Geist', icon: null, tagline: 'Back the founders shaping what comes next. We read your thinking first, and your name last.', ...(window.__sealedBrand?.brand ?? {}) },
       flags: [],
       subjects: { confirm: 'We received your application for {{role}}', advance: 'Next steps for {{role}}', decline: 'Your application for {{role}}' },
       auto: { confirm: true, advance: true, decline: true },
@@ -1126,7 +1127,7 @@ window.__sealedDemo = (() => {
         onclick: () => { persona = key; go(path); },
       }, label);
       return h('div', { class: 'demo-bar' }, h('div', { class: 'demo-in' },
-        h('strong', null, 'Demo with fictional data. View as:'),
+        h('strong', null, window.__sealedBrand?.notice ?? 'Demo with fictional data. View as:'),
         view('applicant', 'Applicant', '/apply/investment-analyst'),
         view('reviewer', 'Reviewer', '/dashboard'),
         view('lead', 'Hiring lead', '/dashboard'),
@@ -2451,8 +2452,8 @@ async function viewEmails() {
       ];
     });
     const b = s.brand;
-    const accent = b.accent ?? '#ff6b4a';
-    const heroColor = b.hero ?? '#0f3d3e';
+    const accent = b.accent ?? '#3457f5';
+    const heroColor = b.hero ?? '#101a3f';
     stage.replaceChildren(
       h('div', { class: 'row seg', role: 'group', 'aria-label': 'Preview size' },
         ['phone', 'desktop'].map((w) => h('button', {
@@ -2691,11 +2692,11 @@ async function viewSettings() {
       s.brand.logo && h('div', null, h('button', { type: 'button', class: 'quiet', onclick: () => { s.brand.logo = null; drawLogo(); } }, 'Remove logo')),
       h('div', { class: 'swatches' },
         h('label', { class: 'field', for: 's-accent' }, 'Main colour',
-          h('input', { id: 's-accent', type: 'color', value: s.brand.accent ?? '#ff6b4a', oninput: (e) => { s.brand.accent = e.target.value; } })),
+          h('input', { id: 's-accent', type: 'color', value: s.brand.accent ?? '#3457f5', oninput: (e) => { s.brand.accent = e.target.value; } })),
         h('label', { class: 'field', for: 's-secondary' }, 'Second colour',
-          h('input', { id: 's-secondary', type: 'color', value: s.brand.secondary ?? '#ffc94d', oninput: (e) => { s.brand.secondary = e.target.value; } })),
+          h('input', { id: 's-secondary', type: 'color', value: s.brand.secondary ?? '#9cc9ff', oninput: (e) => { s.brand.secondary = e.target.value; } })),
         h('label', { class: 'field', for: 's-hero' }, 'Banner colour',
-          h('input', { id: 's-hero', type: 'color', value: s.brand.hero ?? '#0f3d3e', oninput: (e) => { s.brand.hero = e.target.value; } }))),
+          h('input', { id: 's-hero', type: 'color', value: s.brand.hero ?? '#101a3f', oninput: (e) => { s.brand.hero = e.target.value; } }))),
       h('div', { class: 'two' },
         h('label', { class: 'field', for: 's-font' }, 'Font',
           h('select', { id: 's-font', onchange: (e) => { s.brand.font = e.target.value; } },
