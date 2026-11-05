@@ -15,7 +15,15 @@
   --muted: #6c6c72;
   --rule: #e6e6e9;
   --tint: #f5f5f6;
-  --accent: var(--ink);
+  --accent: #ff6b4a;
+  --on-accent: #16120c;
+  --secondary: #ffc94d;
+  --on-secondary: #16120c;
+  --hero-bg: #0f3d3e;
+  --on-hero-bg: #ffffff;
+  --wash: color-mix(in srgb, var(--accent) 9%, var(--paper));
+  --wash-2: color-mix(in srgb, var(--secondary) 18%, var(--paper));
+  --hero-soft: color-mix(in srgb, var(--hero-bg) 10%, var(--paper));
   --bar: #0b0b0c;
   --bar-ink: #9a9aa2;
   --good: #0f6b4c;
@@ -61,12 +69,12 @@ h1.code { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: 0; }
 /* Layout */
 .top { border-bottom: 1px solid var(--rule); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
 .top-in { max-width: 1040px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 28px; min-height: 64px; padding-block: 10px; }
-.top.dark { background: #000000; border-color: #000000; color: #ffffff; }
+.top.dark { background: var(--hero-bg); border-color: var(--hero-bg); color: var(--on-hero-bg); }
 .brand { font: 600 1.05rem var(--sans); letter-spacing: -0.02em; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; }
 .logo { height: 16px; width: auto; max-width: 180px; display: block; }
 .nav { display: flex; flex-wrap: wrap; gap: 2px 20px; flex: 1; min-width: 0; }
 .nav button, .signout { background: none; border: 0; color: inherit; opacity: 0.55; font: 400 0.94rem var(--sans); padding: 4px 0; cursor: pointer; }
-.nav button:hover, .signout:hover, .nav button.on { opacity: 1; }
+.nav button:hover, .signout:hover, .nav button.on { opacity: 1; box-shadow: 0 2px 0 var(--accent); }
 .page { max-width: 1040px; margin: 0 auto; padding-block: clamp(36px, 7vw, 72px) 96px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: grid; gap: 32px; grid-template-columns: minmax(0, 1fr); }
 .page.narrow { max-width: 680px; }
 .stack { display: grid; gap: 14px; min-width: 0; align-content: start; grid-template-columns: minmax(0, 1fr); }
@@ -76,14 +84,14 @@ h1.code { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: 0; }
 .between { justify-content: space-between; }
 .grow { flex: 1; min-width: 0; }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 20px; }
-.panel { background: var(--tint); border-radius: 12px; padding: 20px; }
+.panel { background: var(--wash); border-radius: 12px; padding: 20px; }
 .eyebrow { font-size: 0.875rem; color: var(--muted); }
 
 /* Controls */
 .btn { font: 500 0.95rem var(--sans); padding: 10px 20px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; min-height: 44px; }
 .btn:hover:not(:disabled) { border-color: var(--ink); }
-.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.btn.primary:hover:not(:disabled) { opacity: 0.85; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { filter: brightness(0.93); border-color: var(--accent); }
 .btn.danger { color: var(--bad); border-color: var(--bad); }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .quiet { background: none; border: 0; padding: 4px 0; color: var(--muted); font: 400 0.94rem var(--sans); cursor: pointer; text-decoration: none; }
@@ -94,27 +102,32 @@ h1.code { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: 0; }
 input[type=text], input[type=email], input[type=tel], input[type=password], input[type=number], input[type=datetime-local], textarea, select {
   width: 100%; font: 400 1rem var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 10px; padding: 11px 13px; min-width: 0;
 }
-input:focus, textarea:focus, select:focus { border-color: var(--ink); outline: none; }
+input:focus, textarea:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--wash); }
 input[type=file] { font: 400 0.9rem var(--sans); max-width: 100%; }
 input[type=color] { width: 52px; height: 36px; padding: 0; background: none; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
 textarea { min-height: 160px; resize: vertical; line-height: 1.6; }
 .check, .choice { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; font-weight: 400; }
-.check input, .choice input { margin-top: 5px; width: 16px; height: 16px; flex: none; accent-color: var(--ink); }
+.check input, .choice input { margin-top: 5px; width: 16px; height: 16px; flex: none; accent-color: var(--accent); }
 .must { border: 0; padding: 0 0 14px; margin: 0; border-bottom: 1px solid var(--rule); display: grid; gap: 8px; min-width: 0; }
 .must legend { font-weight: 500; font-size: 0.94rem; padding: 0; margin-bottom: 8px; }
 .must .row { gap: 22px; }
 .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
 .error { background: var(--bad-soft); color: var(--bad); padding: 11px 14px; border-radius: 10px; }
-.notice { background: var(--tint); padding: 14px 16px; border-radius: 12px; }
+.notice { background: var(--wash-2); padding: 14px 16px; border-radius: 12px; }
 .warn { background: var(--warn-soft); color: var(--warn); padding: 11px 14px; border-radius: 10px; font-size: 0.94rem; }
 .over { color: var(--bad); font-weight: 500; }
 
 /* Status */
-.pill { display: inline-block; font-size: 0.8rem; padding: 1px 10px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
-.pill.advanced, .pill.sent { color: var(--good); border-color: currentColor; }
-.pill.discuss, .pill.queued { color: var(--warn); border-color: currentColor; }
-.tally { display: flex; flex-wrap: wrap; gap: 12px 48px; margin: 0; }
-.tally dt { color: var(--muted); font-size: 0.875rem; }
+.pill { display: inline-block; font-size: 0.8rem; padding: 2px 11px; border-radius: 999px; background: var(--tint); color: var(--muted); white-space: nowrap; }
+.pill.open, .pill.advanced, .pill.sent { background: color-mix(in srgb, var(--good) 15%, var(--paper)); color: var(--good); }
+.pill.closed { background: var(--hero-soft); color: var(--ink); }
+.pill.discuss, .pill.queued { background: var(--warn-soft); color: var(--warn); }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 10px; margin: 0; }
+.tally > div { padding: 16px 20px; border-radius: 14px; background: var(--tint); }
+.tally .tally-hero { background: var(--hero-bg); color: var(--on-hero-bg); }
+.tally .tally-accent { background: var(--accent); color: var(--on-accent); }
+.tally .tally-secondary { background: var(--secondary); color: var(--on-secondary); }
+.tally dt { font-size: 0.875rem; opacity: 0.85; }
 .tally dd { margin: 0; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.15; letter-spacing: -0.03em; }
 
 /* Redaction bar */
@@ -130,9 +143,9 @@ textarea { min-height: 160px; resize: vertical; line-height: 1.6; }
 .scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .scale button { border: 1px solid var(--rule); background: transparent; color: var(--muted); border-radius: 10px; padding: 12px 2px; cursor: pointer; font: 400 0.72rem/1.25 var(--sans); min-width: 0; }
 .scale b { display: block; font: 500 1.3rem var(--sans); color: var(--ink); }
-.scale button:hover { border-color: var(--ink); }
-.scale button[aria-pressed=true] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.scale button[aria-pressed=true] b { color: var(--paper); }
+.scale button:hover { border-color: var(--accent); background: var(--wash); }
+.scale button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.scale button[aria-pressed=true] b { color: var(--on-accent); }
 .meter { height: 2px; background: var(--rule); overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--accent); }
 .answer { font-size: 1.15rem; line-height: 1.65; }
@@ -143,13 +156,13 @@ table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
 th { text-align: left; font-size: 0.875rem; color: var(--muted); font-weight: 400; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: bottom; white-space: nowrap; }
 td { padding: 14px 12px 14px 0; border-bottom: 1px solid var(--rule); vertical-align: middle; }
 tr.click { cursor: pointer; }
-tr.click:hover td { background: var(--tint); }
+tr.click:hover td { background: var(--wash); }
 .scorecell { font-weight: 500; font-size: 1.05rem; }
 .bigscore { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: -0.03em; }
-.role-row { display: grid; gap: 6px; padding-block: 22px; border-bottom: 1px solid var(--rule); }
-.role-row:first-child { padding-top: 0; }
+.role-row { display: grid; gap: 6px; padding: 20px 22px; border-radius: 14px; background: var(--wash); }
+.role-row + .role-row { margin-top: 10px; }
 .aside { display: flex; flex-wrap: wrap; gap: 4px 20px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); color: var(--ink); font: 400 0.95rem/1.5 var(--sans); padding: 14px 0; cursor: pointer; }
-.aside:hover { background: var(--tint); }
+.aside:hover { background: var(--wash-2); }
 .qcard { border-bottom: 1px solid var(--rule); padding-bottom: 22px; display: grid; gap: 12px; }
 .qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; }
 .qa { border-top: 1px solid var(--rule); padding-top: 24px; }
@@ -158,7 +171,7 @@ tr.click:hover td { background: var(--tint); }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; overflow-wrap: anywhere; }
 .logo-preview { min-height: 64px; display: flex; align-items: center; padding: 16px 20px; border-radius: 12px; background: var(--tint); font-weight: 600; letter-spacing: -0.02em; }
-.logo-preview.dark { background: #000000; color: #ffffff; }
+.logo-preview.dark { background: var(--hero-bg); color: var(--on-hero-bg); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 20px; border-radius: 999px; font-size: 0.94rem; z-index: 30; max-width: calc(100vw - 32px); }
 
 /* Emails page */
@@ -171,11 +184,11 @@ tr.click:hover td { background: var(--tint); }
 .switch input { position: absolute; inset: 0; margin: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
 .switch i { position: absolute; inset: 0; border-radius: 999px; background: var(--rule); pointer-events: none; }
 .switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; }
-.switch input:checked + i { background: var(--ink); }
-.switch input:checked + i::after { left: 18px; background: var(--paper); }
+.switch input:checked + i { background: var(--accent); }
+.switch input:checked + i::after { left: 18px; background: #ffffff; }
 .switch input:focus-visible + i { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 40px; align-items: start; }
-.stage { display: grid; gap: 14px; justify-items: center; min-width: 0; background: var(--tint); border-radius: 16px; padding: 20px 12px; }
+.stage { display: grid; gap: 14px; justify-items: center; min-width: 0; background: var(--wash-2); border-radius: 16px; padding: 20px 12px; }
 .seg { gap: 4px; }
 .seg button { background: none; border: 0; color: var(--muted); font: 400 0.875rem var(--sans); padding: 4px 12px; border-radius: 999px; cursor: pointer; }
 .seg button.on { background: var(--paper); color: var(--ink); }
@@ -208,17 +221,28 @@ tr.click:hover td { background: var(--tint); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; padding: 2px 11px; border: 1px solid var(--rule); border-radius: 999px; font-size: 0.82rem; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.chip.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .chip:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 select.inline { width: auto; padding: 6px 10px; font-size: 0.92rem; }
 .levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px 28px; margin: 0; }
 .levels dt { font-weight: 500; }
 .levels dd { margin: 0; color: var(--muted); font-size: 0.92rem; }
 
+.back { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 7px 16px 7px 12px; border: 0; border-radius: 999px; background: var(--wash); color: var(--ink); font: 500 0.94rem var(--sans); cursor: pointer; }
+.back:hover { background: color-mix(in srgb, var(--accent) 20%, var(--paper)); }
+.swatches { display: flex; flex-wrap: wrap; gap: 20px 32px; }
+
 /* Hero */
-.hero { background: var(--tint); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
-.hero.dark { background: #000000; color: #ffffff; --muted: #a3a3a9; }
-.hero-in { max-width: 1040px; margin: 0 auto; padding-block: clamp(36px, 8vw, 80px); display: grid; gap: 14px; }
+.hero { position: relative; overflow: hidden; background: var(--hero-bg); color: var(--on-hero-bg); --muted: color-mix(in srgb, var(--on-hero-bg) 76%, var(--hero-bg)); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+/* A sun and an arc: simple shapes that take on whatever colours the brand sets. */
+.hero::before { content: ""; position: absolute; right: -70px; top: -70px; width: 260px; height: 260px; border-radius: 50%; background: var(--secondary); }
+.hero::after { content: ""; position: absolute; right: 24px; bottom: -130px; width: 240px; height: 240px; border-radius: 50%; border: 34px solid var(--accent); }
+/* Below this width the text needs the room, so the shapes step back. */
+@media (max-width: 1240px) {
+  .hero::before { width: 150px; height: 150px; right: -60px; top: -60px; }
+  .hero::after { display: none; }
+}
+.hero-in { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding-block: clamp(36px, 8vw, 80px); display: grid; gap: 14px; }
 .hero-in.narrow { max-width: 640px; }
 .hero-in h1 { font-size: clamp(2.4rem, 8vw, 4.2rem); line-height: 1; }
 .hero .lede { color: var(--muted); max-width: 58ch; }
@@ -229,10 +253,11 @@ select.inline { width: auto; padding: 6px 10px; font-size: 0.92rem; }
 .funnel { display: flex; gap: 10px; overflow-x: auto; align-items: flex-start; padding-bottom: 4px; }
 .funnel-step { flex: 1 0 84px; min-width: 84px; display: grid; gap: 1px; align-content: start; }
 .funnel-bar { height: 76px; display: flex; align-items: flex-end; margin-bottom: 6px; border-bottom: 1px solid var(--rule); }
-.funnel-bar i { display: block; width: 100%; background: var(--accent); }
+.funnel-bar i { display: block; width: 100%; border-radius: 6px 6px 0 0; background: var(--accent); }
+.funnel-step:nth-child(-n+2) .funnel-bar i { background: var(--hero-bg); }
 .funnel-num { font-size: 1.5rem; line-height: 1.1; letter-spacing: -0.02em; }
 .kanban { display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; padding-bottom: 12px; scroll-snap-type: x proximity; }
-.column { flex: 0 0 min(268px, 80vw); background: var(--tint); border-radius: 12px; padding: 12px; display: grid; gap: 8px; scroll-snap-align: start; min-height: 150px; align-content: start; }
+.column { flex: 0 0 min(268px, 80vw); background: var(--wash); border-radius: 12px; padding: 12px; display: grid; gap: 8px; scroll-snap-align: start; min-height: 150px; align-content: start; }
 .column.over { outline: 2px solid var(--accent); outline-offset: -2px; }
 .column-head { display: flex; gap: 8px; align-items: baseline; padding: 2px 2px 6px; }
 .column-head h3 { flex: 1; min-width: 0; font-weight: 500; }
@@ -260,6 +285,7 @@ details summary { cursor: pointer; list-style-position: inside; }
 .timeline li:last-child::after { display: none; }
 .timeline li.done { color: var(--ink); }
 .timeline li.done::before { background: var(--accent); border-color: var(--accent); }
+.timeline li.done::after { background: var(--accent); }
 .wrap { white-space: normal; overflow-wrap: anywhere; }
 .qr { width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 10px; }
 .recovery { word-spacing: 0.4em; line-height: 1.9; }
@@ -269,18 +295,18 @@ details summary { cursor: pointer; list-style-position: inside; }
 /* Motion: quick and quiet, and off for anyone who prefers less */
 @media (prefers-reduced-motion: no-preference) {
   main.page { animation: settle 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-  .btn, .scale button, .quiet, .nav button, input, textarea, select, .switch i, .switch i::after, tr.click td, .aside { transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, left 0.15s ease; }
+  .btn, .back, .scale button, .quiet, .nav button, input, textarea, select, .switch i, .switch i::after, tr.click td, .aside { transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, left 0.15s ease; }
   .btn:active:not(:disabled), .scale button:active { transform: scale(0.98); }
   .toast { animation: settle 0.2s ease both; }
 }
 @keyframes settle { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 
 /* Demo only */
-.demo-bar { background: var(--tint); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+.demo-bar { background: var(--wash-2); padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
 .demo-in { max-width: 1040px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding-block: 9px; font-size: 0.875rem; color: var(--muted); }
 .demo-in strong { font-weight: 400; }
 .demo-in button { background: none; color: var(--muted); border: 0; border-radius: 999px; padding: 3px 12px; font: 400 0.875rem var(--sans); cursor: pointer; }
-.demo-in button.on { background: var(--ink); color: var(--paper); }
+.demo-in button.on { background: var(--accent); color: var(--on-accent); }
 .demo-in button.reset { text-decoration: underline; padding-inline: 2px; }
 @media (max-width: 560px) {
   .q-col { display: none; }
@@ -425,7 +451,7 @@ const demoStages = [
   { name: 'Hired', type: 'hired' },
 ];
 const demoData = {
-  org: 'Example Ventures',
+  org: 'Tallowood Ventures',
   team: [
     { key: 'alex', name: 'Alex Morgan', email: 'alex@example.com', role: 'admin', master: true, areas: [] },
     { key: 'jess', name: 'Jess Park', email: 'jess@example.com', role: 'admin', areas: ['Investment', 'Platform'] },
@@ -523,7 +549,7 @@ window.__sealedDemo = (() => {
     const now = Date.now();
     db = {
       org: demoData.org, retention: 180, applied: false, audit: [], emails: [],
-      brand: { accent: '#0f6b52', header: 'light', logo: null, font: 'Geist', icon: null },
+      brand: { accent: '#ff6b4a', secondary: '#ffc94d', hero: '#0f3d3e', header: 'dark', logo: null, font: 'Geist', icon: null, tagline: 'Back the founders shaping what comes next. We read your thinking first, and your name last.' },
       flags: [],
       subjects: { confirm: 'We received your application for {{role}}', advance: 'Next steps for {{role}}', decline: 'Your application for {{role}}' },
       auto: { confirm: true, advance: true, decline: true },
@@ -967,6 +993,18 @@ window.__sealedDemo = (() => {
         })),
       };
     }],
+    ['POST', /^\/api\/roles\/([^/]+)\/stages$/, (id, b) => {
+      const r = role(id);
+      for (const old of r.stages) {
+        if (!b.stages.some((x) => x.id === old.id) && appsOf(id).some((a) => a.stage_id === old.id)) fail(409, `People are at ${old.name}. Move them before removing it.`);
+      }
+      r.stages = b.stages.map((x, i) => {
+        if (!String(x.name ?? '').trim()) fail(400, `Stage ${i + 1} needs a name.`);
+        return { booking_url: '', prompt: '', due_days: 7, stall_days: 5, email_text: '', ...x, id: x.id ?? uid(), position: i };
+      });
+      log(me().name, 'stages_updated', null, r.title);
+      return { ok: true };
+    }],
     ['POST', /^\/api\/roles\/([^/]+)\/applications\/([^/]+)\/move$/, (id, code, b) => {
       const r = role(id);
       const a = appBy(id, code);
@@ -1117,7 +1155,7 @@ const SCORE_LABELS = ['No evidence', 'Limited', 'Solid', 'Strong', 'Exceptional'
 const STATUS_LABELS = { submitted: 'Awaiting decision', advanced: 'Advanced', declined: 'Declined' };
 const ROLE_LABELS = { draft: 'Draft', open: 'Open', closed: 'Closed' };
 
-const state = { user: null, org: '', brand: null, path: DEMO ? DEMO.start : location.pathname };
+const state = { user: null, org: '', brand: null, trail: [], path: DEMO ? DEMO.start : location.pathname };
 const root = document.getElementById('app');
 let reviewSteps = 0; // How many answers back a reviewer has stepped.
 let keyHandler = null;
@@ -1198,14 +1236,44 @@ function h(tag, props, ...children) {
   return el;
 }
 
-function go(path, { replace = false } = {}) {
+// Where Back goes if someone arrived directly, such as from a link in an email.
+function parentOf(path) {
+  const inner = /^(\/roles\/[^/]+)\/(?:a\/[^/]+|pipeline|review|edit)$/.exec(path);
+  if (inner) return inner[1];
+  if (/^\/(?:roles\/[^/]+|team|emails|activity|settings|account)$/.test(path)) return '/dashboard';
+  if (/^\/(?:apply\/[^/]+|privacy|login)$/.test(path)) return '/';
+  return null;
+}
+
+function goBack() {
+  const previous = state.trail.pop();
+  if (previous && !DEMO) { history.back(); return; }
+  const target = previous ?? parentOf(state.path);
+  if (!target) return;
+  state.path = target;
+  reviewSteps = 0;
+  if (!DEMO) history.replaceState({}, '', target);
+  window.scrollTo(0, 0);
+  render();
+}
+
+function go(path, { replace = false, fresh = false } = {}) {
+  stageSetupOpen = false;
+  if (fresh) state.trail = [];
+  else if (!replace && path !== state.path) state.trail.push(state.path);
   state.path = path;
   reviewSteps = 0;
   if (!DEMO) history[replace ? 'replaceState' : 'pushState']({}, '', path);
   window.scrollTo(0, 0);
   render();
 }
-window.addEventListener('popstate', () => { state.path = location.pathname; render(); });
+window.addEventListener('popstate', () => {
+  // The browser's own Back and Forward stay in step with the page's Back button.
+  if (state.trail[state.trail.length - 1] === location.pathname) state.trail.pop();
+  state.path = location.pathname;
+  reviewSteps = 0;
+  render();
+});
 
 function toast(message) {
   document.querySelector('.toast')?.remove();
@@ -1262,7 +1330,20 @@ function action(button, box, fn) {
 function applyBrand(brand) {
   state.brand = brand;
   const root = document.documentElement.style;
-  if (brand?.accent) root.setProperty('--accent', brand.accent); else root.removeProperty('--accent');
+  const readableOn = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    // Whichever of near-black or white has the stronger contrast on this colour.
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? '#16120c' : '#ffffff';
+  };
+  for (const [name, value] of [['accent', brand?.accent], ['secondary', brand?.secondary], ['hero-bg', brand?.hero]]) {
+    if (value) {
+      root.setProperty(`--${name}`, value);
+      root.setProperty(`--on-${name}`, readableOn(value));
+    } else {
+      root.removeProperty(`--${name}`);
+      root.removeProperty(`--on-${name}`);
+    }
+  }
   if (brand?.name) document.title = brand.name;
 
   const custom = brand?.font && brand.font !== 'Geist';
@@ -1309,18 +1390,21 @@ function shell(children, { narrow = false, hero = null } = {}) {
     !DEMO && link('Account', '/account', here === '/account'),
   ] : [];
   return [
-    DEMO && DEMO.bar(go, render),
+    DEMO && DEMO.bar((path) => go(path, { fresh: true }), render),
     h('header', { class: `top${state.brand?.header === 'dark' ? ' dark' : ''}` }, h('div', { class: 'top-in' },
       h('button', { type: 'button', class: 'brand', onclick: () => go(u ? '/dashboard' : '/') }, brandMark()),
       h('nav', { class: 'nav', 'aria-label': 'Main' }, nav),
       u && !DEMO && h('button', {
         type: 'button', class: 'signout',
-        onclick: async () => { await api('POST', '/api/logout', {}); state.user = null; go('/login'); },
+        onclick: async () => { await api('POST', '/api/logout', {}); state.user = null; go('/login', { fresh: true }); },
       }, 'Sign out'),
     )),
     hero && h('section', { class: `hero${state.brand?.header === 'dark' ? ' dark' : ''}` },
       h('div', { class: `hero-in${narrow ? ' narrow' : ''}` }, h('i', { class: 'hero-mark' }), hero)),
-    h('main', { class: `page${narrow ? ' narrow' : ''}` }, children),
+    h('main', { class: `page${narrow ? ' narrow' : ''}` },
+      (state.trail.length > 0 || parentOf(state.path)) && h('div', null, h('button', { type: 'button', class: 'back', onclick: goBack },
+        h('span', { 'aria-hidden': 'true' }, '\u2190'), 'Back')),
+      children),
   ];
 }
 
@@ -1495,7 +1579,7 @@ async function viewApply(slug) {
       });
       store.del(draftKey);
       state.justSubmitted = true;
-      if (res.status_path) go(res.status_path); else go('/');
+      if (res.status_path) go(res.status_path, { fresh: true }); else go('/', { fresh: true });
     }));
     return h('div', { class: 'stack lg' },
       removed > 0 && h('p', { class: 'lede' }, `We removed ${removed} identifying ${removed === 1 ? 'detail' : 'details'}. Go back if that changes your meaning.`),
@@ -1680,7 +1764,7 @@ function viewLogin() {
           return;
         }
         state.user = res.user;
-        go('/dashboard');
+        go('/dashboard', { fresh: true });
       }),
     },
     h('label', { class: 'field', for: 'login-email' }, 'Email', email),
@@ -1702,7 +1786,7 @@ async function viewInvite(token) {
       onsubmit: action(submit, box, async () => {
         const res = await api('POST', `/api/invite/${encodeURIComponent(token)}`, { password: password.value });
         state.user = res.user;
-        go('/dashboard');
+        go('/dashboard', { fresh: true });
       }),
     },
     h('p', { class: 'muted' }, `Signing in as ${info.email}.`),
@@ -1735,7 +1819,7 @@ async function viewDashboard() {
         h('div', { class: 'row' },
           left > 0 && h('button', { class: 'btn primary', onclick: () => go(`/roles/${r.id}/review`) }, `Score ${left} ${left === 1 ? 'answer' : 'answers'}`),
           r.status !== 'draft' && h('button', { class: 'btn', onclick: () => go(`/roles/${r.id}`) }, 'Ranking'),
-          r.status !== 'draft' && r.has_pipeline && h('button', { class: 'btn', onclick: () => go(`/roles/${r.id}/pipeline`) }, 'Pipeline'),
+          (r.can_manage || (r.status !== 'draft' && r.has_pipeline)) && h('button', { class: 'btn', onclick: () => go(`/roles/${r.id}/pipeline`) }, 'Pipeline'),
           r.can_manage && h('button', { class: 'quiet', onclick: () => go(`/roles/${r.id}/edit`) }, 'Edit'),
           r.can_manage && copyRole(r))),
       h('p', { class: 'muted small' },
@@ -1768,7 +1852,7 @@ async function viewRoleEdit(id) {
     title: existing.role.title, summary: existing.role.summary, description: existing.role.description,
     closes_at: existing.role.closes_at, reviewer_ids: existing.reviewer_ids,
     must_haves: existing.role.must_haves, scan_enabled: existing.role.scan_enabled, sample_percent: existing.role.sample_percent,
-    stages: existing.stages.map((x) => ({ ...x })), area: existing.role.area, reviews_per: existing.role.reviews_per, lead_ids: existing.lead_ids, scan_rules: existing.role.scan_rules,
+    area: existing.role.area, reviews_per: existing.role.reviews_per, lead_ids: existing.lead_ids, scan_rules: existing.role.scan_rules,
     questions: existing.questions.map((q) => ({ prompt: q.prompt, guidance: q.guidance, word_limit: q.word_limit, weight: q.weight, min_words: q.min_words, screened: Boolean(q.screened) })),
   } : {
     title: '', summary: '', description: '', closes_at: Date.now() + 21 * 86_400_000, reviewer_ids: [],
@@ -1826,32 +1910,6 @@ async function viewRoleEdit(id) {
       h('span', { class: 'hint' }, 'This share of the set-aside pile still goes to reviewers, as a check on the scan.'),
       h('input', { id: 'r-sample', type: 'number', min: '0', max: '100', style: 'max-width:120px', value: form.sample_percent, oninput: (e) => { form.sample_percent = Number(e.target.value); } })));
 
-  const stageArea = h('div', { class: 'stack' });
-  function drawStages() {
-    stageArea.replaceChildren(...form.stages.map((st, i) => h('div', { class: 'qcard' },
-      h('div', { class: 'qgrid' },
-        h('label', { class: 'field', for: `st-name-${i}` }, 'Stage name', h('input', { id: `st-name-${i}`, type: 'text', value: st.name, oninput: (e) => { st.name = e.target.value; } })),
-        h('label', { class: 'field', for: `st-type-${i}` }, 'Type',
-          h('select', { id: `st-type-${i}`, onchange: (e) => { st.type = e.target.value; drawStages(); } },
-            Object.entries(STAGE_TYPE_LABELS).map(([v, l]) => h('option', { value: v, selected: st.type === v }, l))))),
-      ['task', 'interview', 'references'].includes(st.type) && h('label', { class: 'field', for: `st-prompt-${i}` }, st.type === 'task' ? 'The task' : 'What to tell them',
-        h('textarea', { id: `st-prompt-${i}`, style: 'min-height:70px', value: st.prompt ?? '', oninput: (e) => { st.prompt = e.target.value; } })),
-      st.type === 'interview' && h('label', { class: 'field', for: `st-book-${i}` }, 'Booking link',
-        h('span', { class: 'hint' }, 'From Calendly, Google Calendar or similar. It goes in the email as a button.'),
-        h('input', { id: `st-book-${i}`, type: 'text', value: st.booking_url ?? '', oninput: (e) => { st.booking_url = e.target.value; } })),
-      h('div', { class: 'qgrid' },
-        st.type === 'task' && h('label', { class: 'field', for: `st-due-${i}` }, 'Days to complete', h('input', { id: `st-due-${i}`, type: 'number', min: '1', max: '60', value: st.due_days ?? 7, oninput: (e) => { st.due_days = Number(e.target.value); } })),
-        st.type !== 'hired' && h('label', { class: 'field', for: `st-stall-${i}` }, 'Alert after (days)', h('input', { id: `st-stall-${i}`, type: 'number', min: '1', max: '60', value: st.stall_days ?? 5, oninput: (e) => { st.stall_days = Number(e.target.value); } }))),
-      h('details', null, h('summary', { class: 'quiet' }, 'Customise this email'),
-        h('label', { class: 'field', for: `st-mail-${i}` }, 'Message',
-          h('span', { class: 'hint' }, 'Leave blank for the standard message. Fields: {{first_name}}, {{role}}, {{org}}, {{stage}}, {{brief}}, {{due}}, {{booking_link}}, {{status_link}}'),
-          h('textarea', { id: `st-mail-${i}`, style: 'min-height:120px', value: st.email_text ?? '', oninput: (e) => { st.email_text = e.target.value; } }))),
-      h('div', { class: 'row' },
-        i > 0 && h('button', { type: 'button', class: 'quiet', onclick: () => { form.stages.splice(i - 1, 0, form.stages.splice(i, 1)[0]); drawStages(); } }, 'Move up'),
-        h('button', { type: 'button', class: 'quiet', onclick: () => { form.stages.splice(i, 1); drawStages(); } }, 'Remove')))));
-  }
-  drawStages();
-
   const teamArea = h('div', { class: 'stack' });
   function drawTeam() {
     const person = (u, list, prefix) => h('label', { class: 'check', for: `${prefix}-${u.id}` },
@@ -1904,7 +1962,7 @@ async function viewRoleEdit(id) {
       onsubmit: action(save, box, async () => {
         if (existing) { await api('PUT', `/api/roles/${id}`, form); toast('Saved'); render(); } else {
           const made = await api('POST', '/api/roles', form);
-          go(`/roles/${made.id}/edit`);
+          go(`/roles/${made.id}/edit`, { replace: true });
         }
       }),
     },
@@ -1929,11 +1987,6 @@ async function viewRoleEdit(id) {
         h('span', null, 'Run the first scan on this job')),
       screenArea,
       locked && h('p', { class: 'muted small' }, 'Changes apply to new applications. To apply them to existing ones, use Run scan again on the ranking page.')),
-    h('section', { class: 'stack' },
-      h('h2', null, 'Recruitment stages'),
-      h('p', { class: 'muted' }, 'After someone is advanced, they move through these in order. A work task placed first stays anonymous, and the first interview opens their name.'),
-      stageArea,
-      h('div', null, h('button', { type: 'button', class: 'btn', onclick: () => { form.stages.push({ name: 'New stage', type: 'interview', stall_days: 5 }); drawStages(); } }, 'Add stage'))),
     h('section', { class: 'stack' },
       h('h2', null, 'Who works on this job'),
       h('label', { class: 'field', for: 'r-area' }, 'Job area',
@@ -2080,12 +2133,12 @@ async function viewBoard(id) {
     h('div', { class: 'row between' },
       h('div', { class: 'row' }, h('h1', null, b.role.title), pill(b.role.status, ROLE_LABELS[b.role.status])),
       h('div', { class: 'row' },
-        b.has_pipeline && h('button', { class: 'btn', onclick: () => go(`/roles/${id}/pipeline`) }, 'Pipeline'),
+        (b.has_pipeline || b.is_admin) && h('button', { class: 'btn', onclick: () => go(`/roles/${id}/pipeline`) }, 'Pipeline'),
         b.is_admin && !DEMO && h('a', { class: 'quiet', href: `/api/roles/${id}/export.csv`, download: 'scores.csv' }, 'Export'))),
     scan?.enabled && scan.total > 0 && h('dl', { class: 'tally' },
-      h('div', null, h('dt', null, 'Applied'), h('dd', { class: 'num' }, scan.total)),
-      h('div', null, h('dt', null, 'To read'), h('dd', { class: 'num' }, scan.to_read)),
-      h('div', null, h('dt', null, 'Set aside'), h('dd', { class: 'num' }, scan.set_aside)),
+      h('div', { class: 'tally-hero' }, h('dt', null, 'Applied'), h('dd', { class: 'num' }, scan.total)),
+      h('div', { class: 'tally-accent' }, h('dt', null, 'To read'), h('dd', { class: 'num' }, scan.to_read)),
+      h('div', { class: 'tally-secondary' }, h('dt', null, 'Set aside'), h('dd', { class: 'num' }, scan.set_aside)),
       scan.waiting > 0 && h('div', null, h('dt', null, 'Scanning'), h('dd', { class: 'num' }, scan.waiting))),
     // One or two spot-checks prove little, so the warning waits for a fair sample.
     scan?.sampled >= 3 && scan.missed / scan.sampled >= 0.5 && h('p', { class: 'warn' }, `Reviewers rated ${scan.missed} of ${scan.sampled} spot-checks highly. The scan may be too strict, so check the set-aside pile closely.`),
@@ -2229,7 +2282,6 @@ async function viewApplication(id, code) {
   }
 
   return shell([
-    h('div', null, h('button', { class: 'quiet', onclick: () => go(`/roles/${id}`) }, a.role.title)),
     h('div', { class: 'row between' },
       h('div', { class: 'row' }, h('h1', { class: 'code' }, a.code),
         a.status !== 'submitted' && pill(a.status, a.pipeline?.stages.find((x) => x.id === a.pipeline.current_id)?.name ?? STATUS_LABELS[a.status]),
@@ -2262,8 +2314,56 @@ async function viewApplication(id, code) {
 }
 
 // ---- Pipeline ----
+// Lets a hiring lead add, rename, reorder and remove a job's stages, right on the pipeline page.
+function stageEditor(id, saved, onClose) {
+  const box = errorBox();
+  const stages = saved.map((x) => ({ ...x }));
+  const list = h('div', { class: 'stack' });
+  function draw() {
+    list.replaceChildren(...stages.map((st, i) => h('div', { class: 'qcard' },
+      h('div', { class: 'qgrid' },
+        h('label', { class: 'field', for: `st-name-${i}` }, 'Stage name', h('input', { id: `st-name-${i}`, type: 'text', value: st.name, oninput: (e) => { st.name = e.target.value; } })),
+        h('label', { class: 'field', for: `st-type-${i}` }, 'Type',
+          h('select', { id: `st-type-${i}`, onchange: (e) => { st.type = e.target.value; draw(); } },
+            Object.entries(STAGE_TYPE_LABELS).map(([v, l]) => h('option', { value: v, selected: st.type === v }, l))))),
+      ['task', 'interview', 'references'].includes(st.type) && h('label', { class: 'field', for: `st-prompt-${i}` }, st.type === 'task' ? 'The task' : 'What to tell them',
+        h('textarea', { id: `st-prompt-${i}`, style: 'min-height:70px', value: st.prompt ?? '', oninput: (e) => { st.prompt = e.target.value; } })),
+      st.type === 'interview' && h('label', { class: 'field', for: `st-book-${i}` }, 'Booking link',
+        h('span', { class: 'hint' }, 'From Calendly, Google Calendar or similar. It goes in the email as a button.'),
+        h('input', { id: `st-book-${i}`, type: 'text', value: st.booking_url ?? '', oninput: (e) => { st.booking_url = e.target.value; } })),
+      h('div', { class: 'qgrid' },
+        st.type === 'task' && h('label', { class: 'field', for: `st-due-${i}` }, 'Days to complete', h('input', { id: `st-due-${i}`, type: 'number', min: '1', max: '60', value: st.due_days ?? 7, oninput: (e) => { st.due_days = Number(e.target.value); } })),
+        st.type !== 'hired' && h('label', { class: 'field', for: `st-stall-${i}` }, 'Alert after (days)', h('input', { id: `st-stall-${i}`, type: 'number', min: '1', max: '60', value: st.stall_days ?? 5, oninput: (e) => { st.stall_days = Number(e.target.value); } }))),
+      h('details', null, h('summary', { class: 'quiet' }, 'Customise this email'),
+        h('label', { class: 'field', for: `st-mail-${i}` }, 'Message',
+          h('span', { class: 'hint' }, 'Leave blank for the standard message. Fields: {{first_name}}, {{role}}, {{org}}, {{stage}}, {{brief}}, {{due}}, {{booking_link}}, {{status_link}}'),
+          h('textarea', { id: `st-mail-${i}`, style: 'min-height:120px', value: st.email_text ?? '', oninput: (e) => { st.email_text = e.target.value; } }))),
+      h('div', { class: 'row' },
+        i > 0 && h('button', { type: 'button', class: 'quiet', onclick: () => { stages.splice(i - 1, 0, stages.splice(i, 1)[0]); draw(); } }, 'Move up'),
+        h('button', { type: 'button', class: 'quiet', onclick: () => { stages.splice(i, 1); draw(); } }, 'Remove')))));
+  }
+  draw();
+  const save = h('button', { class: 'btn primary', type: 'button' }, 'Save stages');
+  save.addEventListener('click', action(save, box, async () => {
+    await api('POST', `/api/roles/${id}/stages`, { stages });
+    toast('Stages saved');
+    onClose();
+  }));
+  return h('section', { class: 'stack panel' },
+    h('h2', null, 'Set up stages'),
+    h('p', { class: 'muted' }, 'A work task placed first stays anonymous. The first interview opens the person\u2019s name.'),
+    list,
+    h('div', { class: 'row' },
+      h('button', { type: 'button', class: 'btn', onclick: () => { stages.push({ name: 'New stage', type: 'interview', stall_days: 5 }); draw(); } }, 'Add stage'),
+      !stages.length && h('button', { type: 'button', class: 'btn', onclick: () => { stages.push(...STANDARD_STAGES.map((x) => ({ ...x }))); draw(); } }, 'Use the standard stages')),
+    box,
+    h('div', { class: 'row' }, save, h('button', { type: 'button', class: 'quiet', onclick: onClose }, 'Cancel')));
+}
+
+let stageSetupOpen = false;
 async function viewPipeline(id) {
   const p = await api('GET', `/api/roles/${id}/pipeline`);
+  const fullStages = p.is_admin ? (await api('GET', `/api/roles/${id}`)).stages : [];
   const top = Math.max(...p.funnel.map((f) => f.count), 1);
   const moveCard = async (code, stageId) => {
     try {
@@ -2293,7 +2393,10 @@ async function viewPipeline(id) {
   return shell([
     h('div', { class: 'row between' },
       h('div', { class: 'stack' }, h('h1', null, p.role.title), h('p', { class: 'muted' }, 'Everyone who has been advanced.')),
-      h('button', { class: 'btn', onclick: () => go(`/roles/${id}`) }, 'Ranking')),
+      h('div', { class: 'row' },
+        p.is_admin && h('button', { class: 'btn', onclick: () => { stageSetupOpen = !stageSetupOpen; render(); } }, stageSetupOpen ? 'Close stage setup' : 'Set up stages'),
+        h('button', { class: 'btn', onclick: () => go(`/roles/${id}`) }, 'Ranking'))),
+    p.is_admin && (stageSetupOpen || !p.stages.length) && stageEditor(id, fullStages, () => { stageSetupOpen = false; render(); }),
     h('section', { class: 'funnel', 'aria-label': 'Numbers at each stage' }, p.funnel.map((f) => h('div', { class: 'funnel-step' },
       h('div', { class: 'funnel-bar' }, h('i', { style: `height:${Math.max((f.count / top) * 100, f.count ? 4 : 0)}%` })),
       h('div', { class: 'funnel-num num' }, f.count),
@@ -2348,7 +2451,8 @@ async function viewEmails() {
       ];
     });
     const b = s.brand;
-    const accent = b.accent ?? '#0b0b0c';
+    const accent = b.accent ?? '#ff6b4a';
+    const heroColor = b.hero ?? '#0f3d3e';
     stage.replaceChildren(
       h('div', { class: 'row seg', role: 'group', 'aria-label': 'Preview size' },
         ['phone', 'desktop'].map((w) => h('button', {
@@ -2360,9 +2464,9 @@ async function viewEmails() {
           h('div', { class: 'device-from' }, s.org_name),
           h('div', { class: 'device-subject' }, fillIn(s.subjects[current.kind]))),
         h('div', { class: 'mail' },
-          h('div', { class: `mail-head${b.header === 'dark' ? ' dark' : ''}` },
+          h('div', { class: `mail-head${b.header === 'dark' ? ' dark' : ''}`, style: b.header === 'dark' ? `background:${heroColor}` : null },
             b.logo ? h('img', { class: 'mail-logo', src: b.logo, alt: s.org_name }) : s.org_name),
-          h('div', { class: `mail-hero${b.header === 'dark' ? ' dark' : ''}` },
+          h('div', { class: `mail-hero${b.header === 'dark' ? ' dark' : ''}`, style: b.header === 'dark' ? `background:${heroColor}` : null },
             h('i', { style: `background:${accent}` }),
             h('h2', null, HEADINGS[current.kind])),
           ['confirm', 'stage'].includes(current.kind) && h('div', { class: 'mail-steps' },
@@ -2394,7 +2498,7 @@ async function viewEmails() {
   const box = errorBox();
   function drawEditor() {
     if (current.readonly) {
-      editor.replaceChildren(h('p', { class: 'muted' }, 'Each job sets these on its Edit page, under Recruitment stages. This is how an interview invitation looks.'));
+      editor.replaceChildren(h('p', { class: 'muted' }, 'Each job sets these on its Pipeline page, under Set up stages. This is how an interview invitation looks.'));
       return;
     }
     const save = h('button', { class: 'btn primary', type: 'button' }, 'Save email');
@@ -2585,9 +2689,14 @@ async function viewSettings() {
             h('option', { value: 'light', selected: s.brand.header !== 'dark' }, 'Light'),
             h('option', { value: 'dark', selected: s.brand.header === 'dark' }, 'Dark')))),
       s.brand.logo && h('div', null, h('button', { type: 'button', class: 'quiet', onclick: () => { s.brand.logo = null; drawLogo(); } }, 'Remove logo')),
+      h('div', { class: 'swatches' },
+        h('label', { class: 'field', for: 's-accent' }, 'Main colour',
+          h('input', { id: 's-accent', type: 'color', value: s.brand.accent ?? '#ff6b4a', oninput: (e) => { s.brand.accent = e.target.value; } })),
+        h('label', { class: 'field', for: 's-secondary' }, 'Second colour',
+          h('input', { id: 's-secondary', type: 'color', value: s.brand.secondary ?? '#ffc94d', oninput: (e) => { s.brand.secondary = e.target.value; } })),
+        h('label', { class: 'field', for: 's-hero' }, 'Banner colour',
+          h('input', { id: 's-hero', type: 'color', value: s.brand.hero ?? '#0f3d3e', oninput: (e) => { s.brand.hero = e.target.value; } }))),
       h('div', { class: 'two' },
-        h('label', { class: 'field', for: 's-accent' }, 'Accent colour',
-          h('input', { id: 's-accent', type: 'color', value: s.brand.accent ?? '#0b0b0c', oninput: (e) => { s.brand.accent = e.target.value; } })),
         h('label', { class: 'field', for: 's-font' }, 'Font',
           h('select', { id: 's-font', onchange: (e) => { s.brand.font = e.target.value; } },
             s.fonts.map((f) => h('option', { value: f, selected: s.brand.font === f }, f))))),
